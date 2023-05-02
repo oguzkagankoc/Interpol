@@ -94,7 +94,7 @@ class RabbitMQConsumer:
                 nationality_info = NationalityInformation(**nationality_data)
                 session.add(nationality_info)
 
-            session.commit()
+        session.commit()
 
     def start_consuming(self):
         print(' [*] Waiting for messages. To exit press CTRL+C')
