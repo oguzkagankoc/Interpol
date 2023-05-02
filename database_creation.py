@@ -5,7 +5,7 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 import psycopg2
 
 engine = create_engine(
-    "postgresql+psycopg2://postgres:122333@localhost:5432/task")
+    "postgresql+psycopg2://postgres:122333@localhost:5432/task2")
 insp = inspect(engine)
 Base = declarative_base()
 DBSession = sessionmaker(bind=engine)
