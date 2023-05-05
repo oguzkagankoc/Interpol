@@ -1,0 +1,58 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Results</title>
+  </head>
+  <body>
+    <table>
+      <tr>
+        <th>Entity ID</th>
+        <th>Forename</th>
+        <th>Name</th>
+        <th>Sex ID</th>
+        <th>Date of Birth</th>
+        <th>Place of Birth</th>
+        <th>Country of Birth ID</th>
+        <th>Weight</th>
+        <th>Height</th>
+        <th>Distinguishing Marks</th>
+        <th>Eyes Colors ID</th>
+        <th>Hairs ID</th>
+        <th>Is Active</th>
+        <th>Thumbnail</th>
+      </tr>
+      {% for person in persons %}
+      <tr>
+        <td>{{ person.entity_id }}</td>
+        <td>{{ person.forename }}</td>
+        <td>{{ person.name }}</td>
+        <td>{{ person.sex_id }}</td>
+        <td>{{ person.date_of_birth }}</td>
+        <td>{{ person.place_of_birth }}</td>
+        <td>{{ person.country_of_birth_id }}</td>
+        <td>{{ person.weight }}</td>
+        <td>{{ person.height }}</td>
+        <td>{{ person.distinguishing_marks }}</td>
+        <td>{{ person.eyes_colors_id }}</td>
+        <td>{{ person.hairs_id }}</td>
+        <td>{{ person.is_active }}</td>
+        <td class="thumbnail">{{ person.thumbnail }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+    <script>
+      // Tüm td öğelerini seç
+      const tds = document.querySelectorAll('.thumbnail');
+      // Her td öğesi için
+      tds.forEach(td => {
+        // İçeriği base64'den decode et
+        const base64 = td.textContent;
+        const image = new Image();
+        image.src = "data:image/jpeg;base64," + base64;
+        // Yeni bir img öğesi oluştur ve td içine ekle
+        td.innerHTML = '';
+        td.appendChild(image);
+      });
+    </script>
+  </body>
+</html>

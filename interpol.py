@@ -24,10 +24,17 @@ class InterpolPerson:
         data = response.json()
 
         # Get the person's image URL, retrieve the image and encode it to base64
-        image_url = data['_links']['images']['href']
-        image_response = requests.get(image_url)
-        image_content = image_response.content
-        image_base64 = base64.b64encode(image_content).decode('utf-8')
+        if "thumbnail" in data['_links'].keys():
+            image_url = data['_links']['thumbnail']['href']
+            print(data)
+            image_response = requests.get(image_url)
+            image_content = image_response.content
+            image_base64 = base64.b64encode(image_content).decode("utf-8")
+            print(type(image_base64),image_base64,sep='\n')
+        else:
+            image_base64 = None
+
+
 
         # Save the personal information data in a dictionary
         self.personal_info_data = {
@@ -91,7 +98,7 @@ class InterpolPerson:
                 url = p['_links']['self']['href']
                 response = requests.get(url)
                 image_content = response.content
-                image_base64 = base64.b64encode(image_content).decode('utf-8')
+                image_base64 = base64.b64encode(image_content).decode("utf-8")
                 picture_data = {
                     'entity_id': data['entity_id'],
                     'picture_id': p['picture_id'],
