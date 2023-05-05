@@ -2,6 +2,7 @@
 <html>
   <head>
     <title>Results</title>
+    <!-- Styling for table elements -->
     <style>
       table {
         font-family: Arial, Helvetica, sans-serif;
@@ -19,6 +20,7 @@
       tr:hover {
         background-color: #f5f5f5;
       }
+      /* Styling for pagination links */
       .pagination {
         display: flex;
         justify-content: center;
@@ -46,6 +48,7 @@
     </style>
   </head>
   <body>
+    <!-- Table for displaying data -->
     <table>
       <tr>
         <th>Entity ID</th>
@@ -63,6 +66,7 @@
         <th>Is Active</th>
         <th>Thumbnail</th>
       </tr>
+      <!-- Loop through each person's data and add a row to the table -->
       {% for person in pagination.items %}
       <tr>
         <td>{{ person.entity_id }}</td>
@@ -82,10 +86,12 @@
       </tr>
       {% endfor %}
     </table>
+    <!-- Pagination links -->
     <div class="pagination">
       {% if pagination.has_prev %}
       <a href="{{ url_for('results', page=pagination.prev_num) }}">Previous</a>
       {% endif %}
+      <!-- Loop through page numbers and create pagination links -->
       {% for num in pagination.iter_pages(left_edge=1, left_current=1, right_current=2, right_edge=1) %}
       {% if num %}
       {% if num != pagination.page %}
@@ -102,18 +108,18 @@
       {% endif %}
     </div>
     <script>
-      // Tüm td öğelerini seç
-      const tds = document.querySelectorAll('.thumbnail');
-      // Her td öğesi için
-      tds.forEach(td => {
-        // İçeriği base64'den decode et
-        const base64 = td.textContent;
-        const image = new Image();
-        image.src = "data:image/jpeg;base64," + base64;
-        // Yeni bir img öğesi oluştur ve td içine ekle
-        td.innerHTML = '';
-        td.appendChild(image);
-      });
+  // Select all td elements
+  const tds = document.querySelectorAll('.thumbnail');
+  // For each td element
+  tds.forEach(td => {
+    // Decode content from base64
+    const base64 = td.textContent;
+    const image = new Image();
+    image.src = "data:image/jpeg;base64," + base64;
+    // Create a new img element and append it to the td
+    td.innerHTML = '';
+    td.appendChild(image);
+  });
     </script>
   </body>
 </html>
