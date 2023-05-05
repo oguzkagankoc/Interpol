@@ -1,6 +1,6 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 from flask_sqlalchemy import SQLAlchemy
-
+from flask_paginate import Pagination, get_page_parameter
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql+psycopg2://postgres:122333@localhost:5432/task'
 db = SQLAlchemy(app)
@@ -24,11 +24,19 @@ class PersonalInformation(db.Model):
 
 @app.route('/results')
 def results():
-    persons = PersonalInformation.query.all()
-    print(persons)
-    has_next = False
-    return render_template('results.html', persons=persons, has_next=has_next)
+    # Kişi listesini veritabanından al
+    page = request.args.get('page', 1, type=int)
+    persons_query = PersonalInformation.query.order_by(PersonalInformation.name).paginate(page=page, per_page=5)
+    persons = persons_query.items
+    # Sayfalama için gerekli bilgileri oluştur
+    pages = range(1, persons_query.pages + 1)
+    next_url = None
+    if persons_query.has_next:
+        next_url = f'/results?page={persons_query.next_num}'
+    prev_url = None
+    if persons_query.has_prev:
+        prev_url = f'/results?page={persons_query.prev_num}'
+    return render_template('results.html', persons=persons, pagination=persons_query, pages=pages, next_url=next_url, prev_url=prev_url)
 
 if __name__ == '__main__':
     app.run(debug=True)
-

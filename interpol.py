@@ -26,15 +26,11 @@ class InterpolPerson:
         # Get the person's image URL, retrieve the image and encode it to base64
         if "thumbnail" in data['_links'].keys():
             image_url = data['_links']['thumbnail']['href']
-            print(data)
             image_response = requests.get(image_url)
             image_content = image_response.content
             image_base64 = base64.b64encode(image_content).decode("utf-8")
-            print(type(image_base64),image_base64,sep='\n')
         else:
-            image_base64 = None
-
-
+            image_base64 = 'iVBORw0KGgoAAAANSUhEUgAAAKoAAACqAgMAAABAGDwRAAAADFBMVEWutLfk5ufb3d/EyMpaqx/2AAACUUlEQVRYw+3YK3LcQBAA0LZUBgJKkI8gHiLgoD3CAu1IVREQ3wU6gi6xPNQh2QMEzA2CdASDsFCTOJWsVur5dPeM7VTsKgm/mur5dfcIdsHfFla72tWudrVv0359/BFqTwDwEGYP8Oe7D7FK/7XvQux5WM/AHqsnm8u2mSikR9H2FwuFaPVsc8nWM4VUsu1iYRRsj2wpWI1sxluFKCS8rbBNeYunZk/Otp1hC9ZuDFuyVhs2Y61B4YqztWkTzlamTTnbmBaOjG0tOzJ2a9kbxnaWLRjbR9iNZcsIe83Y4Rk2Y6y2bP4fLLyxcV+jzV7oPMScs5iz3j/DFhH3+CYiP4wReecYnvsgIqeyeVJF5GrrQOSsHSLqRR9Rhzp6Kxzb0Mvr2DqiHu/oZXDtQJ10j+3I0u3ahpyaaxXZlnj6s4EK12MPVMvlsTXVyvn61NNkbwNsS7Sp3h785B/Wa/f+Yf3vgL2G98fQ94W6+xfvlv3jB/j+KyRe9W1aswfRqp/zHn8ULKLOEtv2ZNzN+114nkyZPKki6ttnu3YbURi2dqjxMjNs71o8MLbKQ3HE2B58Fl18bLXX3vrsJy9FWQLZzm+Xq4+sJmzm2oagSxCLpUJYgljsQNrStoqk83bMtqFtals63Dng2Q6MLS3L0EvAF1txNjFty1kwbcfa0bADawvDatZm2CqWTgsx2Yq3CbYNb1Nst7w9X9DJdoIdkd0ItkB2EGyJrBbsNbICPW/G2SrJ5outJXv1NFtJNllsI9n0abZ9SQtofb9I3/pPd7Wv0v4Gki3y31ZD0i8AAAAASUVORK5CYII='
 
         # Save the personal information data in a dictionary
         self.personal_info_data = {

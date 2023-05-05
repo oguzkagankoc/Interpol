@@ -2,6 +2,15 @@
 <html>
   <head>
     <title>Results</title>
+    <style>
+      .pagination {
+        display: flex;
+        justify-content: center;
+      }
+      .pagination a {
+        margin: 0 5px;
+      }
+    </style>
   </head>
   <body>
     <table>
@@ -21,7 +30,7 @@
         <th>Is Active</th>
         <th>Thumbnail</th>
       </tr>
-      {% for person in persons %}
+      {% for person in pagination.items %}
       <tr>
         <td>{{ person.entity_id }}</td>
         <td>{{ person.forename }}</td>
@@ -40,6 +49,25 @@
       </tr>
       {% endfor %}
     </table>
+    <div class="pagination">
+      {% if pagination.has_prev %}
+      <a href="{{ url_for('results', page=pagination.prev_num) }}">Previous</a>
+      {% endif %}
+      {% for num in pagination.iter_pages(left_edge=1, left_current=1, right_current=2, right_edge=1) %}
+      {% if num %}
+      {% if num != pagination.page %}
+      <a href="{{ url_for('results', page=num) }}">{{ num }}</a>
+      {% else %}
+      <span>{{ num }}</span>
+      {% endif %}
+      {% else %}
+      <span class="ellipsis">&#8230;</span>
+      {% endif %}
+      {% endfor %}
+      {% if pagination.has_next %}
+      <a href="{{ url_for('results', page=pagination.next_num) }}">Next</a>
+      {% endif %}
+    </div>
     <script>
       // Tüm td öğelerini seç
       const tds = document.querySelectorAll('.thumbnail');
@@ -56,4 +84,3 @@
     </script>
   </body>
 </html>
-
