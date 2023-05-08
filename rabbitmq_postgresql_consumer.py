@@ -20,12 +20,14 @@ class RabbitMQConsumer:
         self.channel = self.connection.channel()
 
         # Declare a queue to consume messages from
-        self.channel.queue_declare(queue='kuyruk_adi')
+        self.channel.queue_declare(queue='add_data')
+        self.channel.queue_declare(queue='change_data')
 
         # Set up a consumer to consume messages from the queue and call the callback function for each message
-        self.channel.basic_consume(queue='kuyruk_adi', on_message_callback=self.callback, auto_ack=True)
+        self.channel.basic_consume(queue='add_data', on_message_callback=self.callback, auto_ack=True)
 
     # Define the callback function to be called for each message consumed from the queue
+
     def callback(self, ch, method, properties, body):
         # Print the message received from the queue
         print(" [x] Received %r" % body.decode('utf-8'))

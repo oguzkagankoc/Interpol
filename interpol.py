@@ -111,18 +111,19 @@ class InterpolPerson:
 
 class Producer:
     # Initialize the Producer class
-    def __init__(self):
+    def __init__(self, key):
+        self.key = key
         # Create a new connection to the RabbitMQ server
         self.connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
         # Create a new channel on the connection
         self.channel = self.connection.channel()
         # Declare the name of the queue that will be used to send messages
-        self.channel.queue_declare(queue='kuyruk_adi')
+        self.channel.queue_declare(queue=self.key)
 
     # Publish a message to the queue
     def publish(self, message):
         # Use the basic_publish method to send the message to the queue
-        self.channel.basic_publish(exchange='', routing_key='kuyruk_adi', body=message)
+        self.channel.basic_publish(exchange='', routing_key=self.key, body=message)
 
     # Close the connection to the RabbitMQ server
     def close(self):
@@ -153,11 +154,11 @@ for page_num in range(1, total_pages):
 
         # Check if the person is already in the database
         if session.query(PersonalInformation).filter_by(entity_id=entity_id).first():
-            print(f"{entity_id}: Kayıt var")
+            print(f"The data with {entity_id} entity_id already exists in the database.")
         else:
             # Add the person to the database and publish their personal information
             json_data = json.dumps(personal_info_data)
-            producer = Producer()
+            producer = Producer('add_data')
             producer.publish(json_data)
             producer.close()
-            print(f"{entity_id}: Kayıt eklendi")
+            print(f"The data with {entity_id} entity_id has been added to the database.")
