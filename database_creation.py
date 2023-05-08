@@ -79,9 +79,9 @@ if not insp.has_table("arrest_warrant_informations"):
 
 class PictureInformation(Base):
     __tablename__ = "picture_informations"
+    picture_id = Column('picture_id', Integer, primary_key=True)
     entity_id = Column('entity_id', String(20), ForeignKey(
         "personal_informations.entity_id"))
-    picture_id = Column('picture_id', Integer, primary_key=True)
     picture_url = Column('picture_url', String(200))
     picture_base64 = Column('picture_base64', Text)
     personal_informations = relationship(
@@ -97,11 +97,14 @@ class ChangeLogInformation(Base):
     log_id = Column('log_id', Integer, primary_key=True)
     entity_id = Column('entity_id', String(20), ForeignKey(
         "personal_informations.entity_id"))
-    modification_in_database = Column('modification_in_database', Text)
-    modification_date = Column('modification_date', DateTime)
+    table_name = Column(String(50), nullable=False)
+    field_name = Column(String(50), nullable=False)
+    old_value = Column(Text)
+    new_value = Column(Text)
+    description = Column(Text)
+    change_date = Column(DateTime)
     personal_informations = relationship(
         "PersonalInformation", backref="change_log", lazy=True, foreign_keys=[entity_id])
-
 
 if not insp.has_table("change_log"):
     Base.metadata.tables['change_log'].create(engine)
