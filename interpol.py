@@ -1,5 +1,6 @@
 import base64
 import json
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import pika
@@ -155,6 +156,10 @@ for page_num in range(1, total_pages):
         # Check if the person is already in the database
         if session.query(PersonalInformation).filter_by(entity_id=entity_id).first():
             print(f"The data with {entity_id} entity_id already exists in the database.")
+            json_data = json.dumps(personal_info_data)
+            producer = Producer('change_data')
+            producer.publish(json_data)
+            producer.close()
         else:
             # Add the person to the database and publish their personal information
             json_data = json.dumps(personal_info_data)

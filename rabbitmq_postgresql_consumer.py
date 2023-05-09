@@ -1,37 +1,87 @@
+import datetime
+from decimal import Decimal
 import pika
 import json
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.exc import IntegrityError
 from database_creation import PersonalInformation, ArrestWarrantInformation, PictureInformation, ChangeLogInformation, \
     NationalityInformation, LanguageInformation
-# Create an engine to connect to the PostgreSQL database
-engine = create_engine(
-    "postgresql+psycopg2://postgres:122333@localhost:5432/task")
-
-# Create a session to work with the database
-Session = sessionmaker(bind=engine)
-session = Session()
 
 # Define a class to consume messages from a RabbitMQ queue
 class RabbitMQConsumer:
     def __init__(self):
+        # Create an engine to connect to the PostgreSQL database
+        self.engine = create_engine(
+            "postgresql+psycopg2://postgres:122333@localhost:5432/task")
+        # Create a session to work with the database
+        self.Session = sessionmaker(bind=self.engine)
+        self.session = self.Session()
         # Create a connection to the local RabbitMQ server
         self.connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
         self.channel = self.connection.channel()
 
-        # Declare a queue to consume messages from
+        # Declare queues to consume messages from
         self.channel.queue_declare(queue='add_data')
         self.channel.queue_declare(queue='change_data')
 
-        # Set up a consumer to consume messages from the queue and call the callback function for each message
+        # Set up consumers to consume messages from the queue and call the callback function for each message
         self.channel.basic_consume(queue='add_data', on_message_callback=self.callback, auto_ack=True)
+        self.channel.basic_consume(queue='change_data', on_message_callback=self.callback_change, auto_ack=True)
 
-    # Define the callback function to be called for each message consumed from the queue
+    # Define callback functions to be called for each message consumed from the queue
+    def callback_change(self, ch, method, properties, body):
+
+        # Print the message received from the queue
+        print(" [x] Received %r" % body.decode('utf-8'))
+        # Parse the message data as JSON
+        data = json.loads(body.decode('utf-8'))
+        entity_id = data['entity_id']
+        db_personal_info = self.session.query(PersonalInformation).filter_by(entity_id=entity_id).one()
+        # Compare the data from the queue with the data from the database
+        changes = {}
+        for key, value in data.items():
+            if not isinstance(value, list) and not value is None:
+                if key == 'date_of_birth':
+                    value = datetime.datetime.strptime(value, '%Y/%m/%d').date()
+                elif key == 'height' and isinstance(value, float):
+                    value = Decimal(str(value))
+                elif key == 'weight' and isinstance(value, float):
+                    value = Decimal(str(value))
+                if getattr(db_personal_info, key) != value:
+                    db_personal_info.__setattr__(key, value)
+                    changes[key] = {'old_value': getattr(db_personal_info, key), 'new_value': value}
+                    change_log_entry = ChangeLogInformation(
+                        entity_id=db_personal_info.entity_id,
+                        table_name='personal_informations',
+                        field_name=key,
+                        old_value=str(changes[key]['old_value']),
+                        new_value=str(changes[key]['new_value']),
+                        description='Change in personal information',
+                        change_date=datetime.datetime.now())
+                    self.session.add(change_log_entry)
+
+
+            elif key == 'arrest_warrants' and not value is None:
+                pass
+            elif key == 'nationalities' and not value is None:
+                pass
+            elif key == 'languages_spoken_ids' and not value is None:
+                pass
+            elif key == 'pictures' and not value is None:
+                pass
+
+        # add a new change log entry to the database
+
+        if changes:
+            print('#')
+            print(changes)
+            print('#')
+            self.handle_database_transaction()
 
     def callback(self, ch, method, properties, body):
         # Print the message received from the queue
         print(" [x] Received %r" % body.decode('utf-8'))
-
         # Parse the message data as JSON
         data = json.loads(body.decode('utf-8'))
 
@@ -51,10 +101,11 @@ class RabbitMQConsumer:
             'weight': data['weight'],
             'is_active': data['is_active'],
             'thumbnail': data['thumbnail']}
+
         personal_info = PersonalInformation(**personal_info_data)
 
         # Add the PersonalInformation object to the session to be committed to the database
-        session.add(personal_info)
+        self.session.add(personal_info)
 
         # If there are arrest warrants in the message, create ArrestWarrantInformation objects and add them to the session
         if not data['arrest_warrants'] is None:
@@ -66,7 +117,7 @@ class RabbitMQConsumer:
                     'charge_translation': warrant['charge_translation']
                 }
                 warrant_info = ArrestWarrantInformation(**warrant_data)
-                session.add(warrant_info)
+                self.session.add(warrant_info)
 
         # Insert picture information into the database, if any
         if not data['pictures'] is None:
@@ -78,7 +129,7 @@ class RabbitMQConsumer:
                     'picture_base64': p['picture_base64']
                 }
                 picture_info = PictureInformation(**picture_data)
-                session.add(picture_info)
+                self.session.add(picture_info)
         if not data['languages_spoken_ids'] is None:
             for l in data['languages_spoken_ids']:
                 language_data = {
@@ -86,7 +137,7 @@ class RabbitMQConsumer:
                     'languages_spoken_id': l['languages_spoken_id']
                 }
                 language_info = LanguageInformation(**language_data)
-                session.add(language_info)
+                self.session.add(language_info)
         if not data['nationalities'] is None:
             for n in data['nationalities']:
                 nationality_data = {
@@ -94,10 +145,17 @@ class RabbitMQConsumer:
                     'nationality': n['nationality']
                 }
                 nationality_info = NationalityInformation(**nationality_data)
-                session.add(nationality_info)
+                self.session.add(nationality_info)
 
-        session.commit()
+        self.handle_database_transaction()
 
+    def handle_database_transaction(self):
+        try:
+            self.session.commit()
+        except IntegrityError:
+            self.session.rollback()
+        finally:
+            self.session.close()
     def start_consuming(self):
         print(' [*] Waiting for messages. To exit press CTRL+C')
         self.channel.start_consuming()

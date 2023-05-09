@@ -1,5 +1,5 @@
 from sqlalchemy.orm import relationship
-from sqlalchemy import Column, String, ForeignKey, Integer, Date, Numeric, Boolean, Text, DateTime
+from sqlalchemy import Column, String, ForeignKey, Integer, Date, Boolean, Text, DateTime, DECIMAL
 from sqlalchemy import inspect, create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 import psycopg2
@@ -21,8 +21,8 @@ class PersonalInformation(Base):
     date_of_birth = Column('date_of_birth', Date)
     place_of_birth = Column('place_of_birth', String(100))
     country_of_birth_id = Column('country_of_birth_id', String(50))
-    weight = Column('weight', Numeric(5, 2))
-    height = Column('height', Numeric(5, 2))
+    weight = Column('weight', DECIMAL())
+    height = Column('height', DECIMAL())
     distinguishing_marks = Column('distinguishing_marks', String(1000))
     eyes_colors_id = Column('eyes_colors_id', String(20))
     hairs_id = Column('hairs_id', String(20))
