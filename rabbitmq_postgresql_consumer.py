@@ -2,11 +2,12 @@ import datetime
 from decimal import Decimal
 import pika
 import json
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, update
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import IntegrityError
 from database_creation import PersonalInformation, ArrestWarrantInformation, PictureInformation, ChangeLogInformation, \
     NationalityInformation, LanguageInformation
+
 
 # Define a class to consume messages from a RabbitMQ queue
 class RabbitMQConsumer:
@@ -49,18 +50,13 @@ class RabbitMQConsumer:
                 elif key == 'weight' and isinstance(value, float):
                     value = Decimal(str(value))
                 if getattr(db_personal_info, key) != value:
-                    db_personal_info.__setattr__(key, value)
                     changes[key] = {'old_value': getattr(db_personal_info, key), 'new_value': value}
-                    change_log_entry = ChangeLogInformation(
-                        entity_id=db_personal_info.entity_id,
-                        table_name='personal_informations',
-                        field_name=key,
-                        old_value=str(changes[key]['old_value']),
-                        new_value=str(changes[key]['new_value']),
-                        description='Change in personal information',
-                        change_date=datetime.datetime.now())
-                    self.session.add(change_log_entry)
-
+                    self.add_change_log_entry(key, db_personal_info.entity_id, changes[key]['old_value'],
+                                              changes[key]['new_value'], PersonalInformation.__tablename__,
+                                              'Change in personal information')
+                    update_statement = update(PersonalInformation).where(
+                        PersonalInformation.entity_id == entity_id).values({key: value})
+                    self.session.execute(update_statement)
 
             elif key == 'arrest_warrants' and not value is None:
                 pass
@@ -70,14 +66,23 @@ class RabbitMQConsumer:
                 pass
             elif key == 'pictures' and not value is None:
                 pass
-
         # add a new change log entry to the database
-
         if changes:
             print('#')
             print(changes)
             print('#')
             self.handle_database_transaction()
+
+    def add_change_log_entry(self, key, entity_id, old_value, new_value, table_name, description):
+        change_log_entry = ChangeLogInformation(
+            entity_id=entity_id,
+            table_name=table_name,
+            field_name=key,
+            old_value=str(old_value),
+            new_value=str(new_value),
+            description=description,
+            change_date=datetime.datetime.now())
+        self.session.add(change_log_entry)
 
     def callback(self, ch, method, properties, body):
         # Print the message received from the queue
@@ -156,12 +161,14 @@ class RabbitMQConsumer:
             self.session.rollback()
         finally:
             self.session.close()
+
     def start_consuming(self):
         print(' [*] Waiting for messages. To exit press CTRL+C')
         self.channel.start_consuming()
 
     def close(self):
         self.connection.close()
+
 
 consumer = RabbitMQConsumer()
 consumer.start_consuming()
