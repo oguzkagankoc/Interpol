@@ -67,7 +67,7 @@ class RabbitMQConsumer:
                 columns = [column['name'] for column in columns]
 
                 # Process the arrest warrants
-                self.process_data(data['languages_spoken_ids'], entity_id, LanguageInformation, inspector, columns)
+                self.process_data(data['languages_spoken_ids'], entity_id, LanguageInformation, columns)
 
             elif key == 'nationalities' and not value is None:
 
@@ -77,7 +77,7 @@ class RabbitMQConsumer:
                 columns = [column['name'] for column in columns]
 
                 # Process the arrest warrants
-                self.process_data(data['nationalities'], entity_id, NationalityInformation, inspector, columns)
+                self.process_data(data['nationalities'], entity_id, NationalityInformation, columns)
 
             elif key == 'arrest_warrants' and not value is None:
 
@@ -87,7 +87,7 @@ class RabbitMQConsumer:
                 columns = [column['name'] for column in columns]
 
                 # Process the arrest warrants
-                self.process_data(data['arrest_warrants'], entity_id, ArrestWarrantInformation, inspector, columns)
+                self.process_data(data['arrest_warrants'], entity_id, ArrestWarrantInformation, columns)
 
             elif key == 'pictures' and not value is None:
                 pass
@@ -96,7 +96,7 @@ class RabbitMQConsumer:
 
         self.handle_database_transaction()
 
-    def process_data(self, data, entity_id, table_name, inspector, columns):
+    def process_data(self, data, entity_id, table_name, columns):
         # Retrieve existing information from the database
         db_infos = self.session.query(table_name).filter_by(entity_id=entity_id).all()
 
