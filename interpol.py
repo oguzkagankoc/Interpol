@@ -13,6 +13,7 @@ engine = create_engine(
 Session = sessionmaker(bind=engine)
 session = Session()
 
+
 class InterpolPerson:
     def __init__(self, person_url):
         # Initialize instance variables
@@ -87,7 +88,8 @@ class InterpolPerson:
 
         # Add pictures information to the personal information data
         pictures = []
-        pictures_link = requests.request("GET", data['_links']['images']['href'], headers={}, data={}).json()["_embedded"]['images']
+        pictures_link = \
+        requests.request("GET", data['_links']['images']['href'], headers={}, data={}).json()["_embedded"]['images']
         if pictures_link is None:
             self.personal_info_data.update({'pictures': None})
         else:
@@ -110,6 +112,7 @@ class InterpolPerson:
             self._get_data()
         return self.personal_info_data
 
+
 class Producer:
     # Initialize the Producer class
     def __init__(self, key):
@@ -131,39 +134,44 @@ class Producer:
         self.connection.close()
 
 
-list_interpol = "https://ws-public.interpol.int/notices/v1/red?nationality=US&resultPerPage=20&page=1"
+def main():
+    list_interpol = "https://ws-public.interpol.int/notices/v1/red?nationality=US&resultPerPage=20&page=1"
 
-# Get the first page and retrieve the total number of pages
-response = requests.get(list_interpol, headers={}, data={})
-json_list = response.json()
-total_pages = int(json_list['total'] / 20 + 2)
+    # Get the first page and retrieve the total number of pages
+    response = requests.get(list_interpol, headers={}, data={})
+    json_list = response.json()
+    total_pages = int(json_list['total'] / 20 + 2)
 
-for page_num in range(1, total_pages):
-    # Construct the page link for each page
-    page_link = f"https://ws-public.interpol.int/notices/v1/red?nationality=US&resultPerPage=20&page={page_num}"
+    for page_num in range(1, total_pages):
+        # Construct the page link for each page
+        page_link = f"https://ws-public.interpol.int/notices/v1/red?nationality=US&resultPerPage=20&page={page_num}"
 
-    # Get the list of persons for the current page
-    response = requests.get(page_link, headers={}, data={})
-    persons_list = response.json()['_embedded']['notices']
+        # Get the list of persons for the current page
+        response = requests.get(page_link, headers={}, data={})
+        persons_list = response.json()['_embedded']['notices']
 
-    # Process each person
-    for person in persons_list:
-        person_links = person['_links']['self']['href']
-        interpol_person = InterpolPerson(person_links)
-        personal_info_data = interpol_person.get_personal_info_data()
-        entity_id = personal_info_data['entity_id']
+        # Process each person
+        for person in persons_list:
+            person_links = person['_links']['self']['href']
+            interpol_person = InterpolPerson(person_links)
+            personal_info_data = interpol_person.get_personal_info_data()
+            entity_id = personal_info_data['entity_id']
 
-        # Check if the person is already in the database
-        if session.query(PersonalInformation).filter_by(entity_id=entity_id).first():
-            print(f"The data with {entity_id} entity_id already exists in the database.")
-            json_data = json.dumps(personal_info_data)
-            producer = Producer('change_data')
-            producer.publish(json_data)
-            producer.close()
-        else:
-            # Add the person to the database and publish their personal information
-            json_data = json.dumps(personal_info_data)
-            producer = Producer('add_data')
-            producer.publish(json_data)
-            producer.close()
-            print(f"The data with {entity_id} entity_id has been added to the database.")
+            # Check if the person is already in the database
+            if session.query(PersonalInformation).filter_by(entity_id=entity_id).first():
+                print(f"The data with {entity_id} entity_id already exists in the database.")
+                json_data = json.dumps(personal_info_data)
+                producer = Producer('change_data')
+                producer.publish(json_data)
+                producer.close()
+            else:
+                # Add the person to the database and publish their personal information
+                json_data = json.dumps(personal_info_data)
+                producer = Producer('add_data')
+                producer.publish(json_data)
+                producer.close()
+                print(f"The data with {entity_id} entity_id has been added to the database.")
+
+
+if __name__ == "__main__":
+    main()

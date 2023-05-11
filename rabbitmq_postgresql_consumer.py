@@ -2,7 +2,7 @@ import datetime
 from decimal import Decimal
 import pika
 import json
-from sqlalchemy import create_engine, update
+from sqlalchemy import create_engine, update, inspect
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import IntegrityError
 from database_creation import PersonalInformation, ArrestWarrantInformation, PictureInformation, ChangeLogInformation, \
@@ -38,10 +38,11 @@ class RabbitMQConsumer:
         # Parse the message data as JSON
         data = json.loads(body.decode('utf-8'))
         entity_id = data['entity_id']
-        db_personal_info = self.session.query(PersonalInformation).filter_by(entity_id=entity_id).one()
+
         # Compare the data from the queue with the data from the database
         changes = {}
         for key, value in data.items():
+            db_personal_info = self.session.query(PersonalInformation).filter_by(entity_id=entity_id).one()
             if not isinstance(value, list) and not value is None:
                 if key == 'date_of_birth':
                     value = datetime.datetime.strptime(value, '%Y/%m/%d').date()
@@ -58,22 +59,104 @@ class RabbitMQConsumer:
                         PersonalInformation.entity_id == entity_id).values({key: value})
                     self.session.execute(update_statement)
 
-            elif key == 'arrest_warrants' and not value is None:
-                pass
-            elif key == 'nationalities' and not value is None:
-                pass
             elif key == 'languages_spoken_ids' and not value is None:
-                pass
+
+                # Get the column names for LanguageInformation table
+                inspector = inspect(self.engine)
+                columns = inspector.get_columns(LanguageInformation.__tablename__)
+                columns = [column['name'] for column in columns]
+
+                # Process the arrest warrants
+                self.process_data(data['languages_spoken_ids'], entity_id, LanguageInformation, inspector, columns)
+
+            elif key == 'nationalities' and not value is None:
+
+                # Get the column names for NationalityInformation table
+                inspector = inspect(self.engine)
+                columns = inspector.get_columns(NationalityInformation.__tablename__)
+                columns = [column['name'] for column in columns]
+
+                # Process the arrest warrants
+                self.process_data(data['nationalities'], entity_id, NationalityInformation, inspector, columns)
+
+            elif key == 'arrest_warrants' and not value is None:
+
+                # Get the column names for ArrestWarrantInformation table
+                inspector = inspect(self.engine)
+                columns = inspector.get_columns(ArrestWarrantInformation.__tablename__)
+                columns = [column['name'] for column in columns]
+
+                # Process the arrest warrants
+                self.process_data(data['arrest_warrants'], entity_id, ArrestWarrantInformation, inspector, columns)
+
             elif key == 'pictures' and not value is None:
                 pass
+
         # add a new change log entry to the database
-        if changes:
-            print('#')
-            print(changes)
-            print('#')
-            self.handle_database_transaction()
+
+        self.handle_database_transaction()
+
+    def process_data(self, data, entity_id, table_name, inspector, columns):
+        # Retrieve existing information from the database
+        db_infos = self.session.query(table_name).filter_by(entity_id=entity_id).all()
+
+        # Create a list of existing items
+        items_list = []
+        ids_list = []
+
+        if db_infos is not None:
+            # Process existing items in the database
+            for item in db_infos:
+                item_dict = {}
+                ids = {}
+                ids[columns[0]] = getattr(item, columns[0])
+
+                # Create a dictionary for each item's column values
+                for column in columns[1:]:
+                    if hasattr(item, column):
+                        column_value = getattr(item, column)
+                        item_dict[column] = column_value
+                        ids[column] = column_value
+
+                items_list.append(item_dict)
+                ids_list.append(ids)
+
+            # Process each item from the data
+            for d in data:
+                # Check if the item is already in the database
+                if d not in items_list:
+                    item_dict = {}
+
+                    # Create a dictionary for the new item's column values
+                    for column in columns[2:]:
+                        column_value = d[column]
+                        item_dict[column] = column_value
+
+                    item_dict['entity_id'] = entity_id
+                    item_info = table_name(**item_dict)
+                    self.session.add(item_info)
+
+            # Delete items that are not present in the data
+            for item in items_list:
+                if item not in data:
+                    for id in ids_list:
+                        if all(id[column] == item[column] for column in columns[1:]):
+                            filter_conditions = []
+                            filter_conditions.append(getattr(table_name, columns[0]) == id[columns[0]])
+                            self.session.query(table_name).filter(*filter_conditions).delete()
+        else:
+            # If no existing data, simply add new items from the data to the database
+            for d in data:
+                item_dict = {}
+                for column in columns[1:]:
+                    column_value = d[column]
+                    item_dict[column] = column_value
+                item_dict['entity_id'] = entity_id
+                item_info = table_name(**item_dict)
+                self.session.add(item_info)
 
     def add_change_log_entry(self, key, entity_id, old_value, new_value, table_name, description):
+        # Create a ChangeLogInformation object with the provided data
         change_log_entry = ChangeLogInformation(
             entity_id=entity_id,
             table_name=table_name,
@@ -81,16 +164,20 @@ class RabbitMQConsumer:
             old_value=str(old_value),
             new_value=str(new_value),
             description=description,
-            change_date=datetime.datetime.now())
+            change_date=datetime.datetime.now()
+        )
+
+        # Add the ChangeLogInformation object to the session to be committed to the database
         self.session.add(change_log_entry)
 
     def callback(self, ch, method, properties, body):
         # Print the message received from the queue
         print(" [x] Received %r" % body.decode('utf-8'))
+
         # Parse the message data as JSON
         data = json.loads(body.decode('utf-8'))
 
-        # Create a PersonalInformation object with the data received
+        # Create a PersonalInformation object with the received data
         personal_info_data = {
             'entity_id': data['entity_id'],
             'name': data['name'],
@@ -105,7 +192,8 @@ class RabbitMQConsumer:
             'distinguishing_marks': data['distinguishing_marks'],
             'weight': data['weight'],
             'is_active': data['is_active'],
-            'thumbnail': data['thumbnail']}
+            'thumbnail': data['thumbnail']
+        }
 
         personal_info = PersonalInformation(**personal_info_data)
 
@@ -135,6 +223,8 @@ class RabbitMQConsumer:
                 }
                 picture_info = PictureInformation(**picture_data)
                 self.session.add(picture_info)
+
+        # Add language information to the database, if any
         if not data['languages_spoken_ids'] is None:
             for l in data['languages_spoken_ids']:
                 language_data = {
@@ -143,6 +233,8 @@ class RabbitMQConsumer:
                 }
                 language_info = LanguageInformation(**language_data)
                 self.session.add(language_info)
+
+        # Add nationality information to the database, if any
         if not data['nationalities'] is None:
             for n in data['nationalities']:
                 nationality_data = {
