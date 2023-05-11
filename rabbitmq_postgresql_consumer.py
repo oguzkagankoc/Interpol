@@ -89,8 +89,27 @@ class RabbitMQConsumer:
                 # Process the arrest warrants
                 self.process_data(data['arrest_warrants'], entity_id, ArrestWarrantInformation, columns)
 
-            elif key == 'pictures' and not value is None:
-                pass
+            elif key == 'pictures' and value is not None:
+                # Retrieve existing PictureInformation objects from the database for the given entity_id
+                db_picture_ids = [d.picture_id for d in
+                                  self.session.query(PictureInformation).filter_by(entity_id=entity_id).all()]
+                queue_picture_ids = [q['picture_id'] for q in data['pictures']]
+
+                # Delete PictureInformation objects from the database that are not in the queue
+                delete_ids = [q for q in db_picture_ids if q not in queue_picture_ids]
+                self.session.query(PictureInformation).filter(PictureInformation.picture_id.in_(delete_ids)).delete(
+                    synchronize_session=False)
+
+                # Add new PictureInformation objects to the database that are not in the database but in the queue
+                new_picture_ids = [p for p in queue_picture_ids if p not in db_picture_ids]
+                new_pictures = [
+                    PictureInformation(
+                        picture_id=p,
+                        entity_id=entity_id,
+                        picture_url=f['picture_url']
+                    ) for p in new_picture_ids for f in data['pictures'] if p == f['picture_id']
+                ]
+                self.session.add_all(new_pictures)
 
         # add a new change log entry to the database
 
