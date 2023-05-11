@@ -91,7 +91,8 @@ class RabbitMQConsumer:
                     PictureInformation(
                         picture_id=p,
                         entity_id=entity_id,
-                        picture_url=f['picture_url']
+                        picture_url=f['picture_url'],
+                        picture_base64=f['picture_base64']
                     ) for p in new_picture_ids for f in data['pictures'] if p == f['picture_id']
                 ]
                 self.session.add_all(new_pictures)
