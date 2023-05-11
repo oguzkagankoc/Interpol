@@ -5,8 +5,14 @@ import json
 from sqlalchemy import create_engine, update, inspect
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import IntegrityError
-from database_creation import PersonalInformation, ArrestWarrantInformation, PictureInformation, ChangeLogInformation, \
-    NationalityInformation, LanguageInformation
+from database_creation import (
+    PersonalInformation,
+    ArrestWarrantInformation,
+    PictureInformation,
+    ChangeLogInformation,
+    NationalityInformation,
+    LanguageInformation
+)
 
 
 # Define a class to consume messages from a RabbitMQ queue
@@ -43,51 +49,30 @@ class RabbitMQConsumer:
         changes = {}
         for key, value in data.items():
             db_personal_info = self.session.query(PersonalInformation).filter_by(entity_id=entity_id).one()
-            if not isinstance(value, list) and not value is None:
+            if not isinstance(value, list) and value is not None:
                 if key == 'date_of_birth':
                     value = datetime.datetime.strptime(value, '%Y/%m/%d').date()
-                elif key == 'height' and isinstance(value, float):
-                    value = Decimal(str(value))
-                elif key == 'weight' and isinstance(value, float):
+                elif key in ['height', 'weight'] and isinstance(value, float):
                     value = Decimal(str(value))
                 if getattr(db_personal_info, key) != value:
                     changes[key] = {'old_value': getattr(db_personal_info, key), 'new_value': value}
-                    self.add_change_log_entry(key, db_personal_info.entity_id, changes[key]['old_value'],
-                                              changes[key]['new_value'], PersonalInformation.__tablename__,
-                                              'Change in personal information')
+                    self.add_change_log_entry(
+                        key, db_personal_info.entity_id, changes[key]['old_value'], changes[key]['new_value'],
+                        PersonalInformation.__tablename__, 'Change in personal information'
+                    )
                     update_statement = update(PersonalInformation).where(
-                        PersonalInformation.entity_id == entity_id).values({key: value})
+                        PersonalInformation.entity_id == entity_id
+                    ).values({key: value})
                     self.session.execute(update_statement)
 
-            elif key == 'languages_spoken_ids' and not value is None:
+            elif key == 'languages_spoken_ids' and value is not None:
+                self.process_data(data['languages_spoken_ids'], entity_id, LanguageInformation)
 
-                # Get the column names for LanguageInformation table
-                inspector = inspect(self.engine)
-                columns = inspector.get_columns(LanguageInformation.__tablename__)
-                columns = [column['name'] for column in columns]
+            elif key == 'nationalities' and value is not None:
+                self.process_data(data['nationalities'], entity_id, NationalityInformation)
 
-                # Process the arrest warrants
-                self.process_data(data['languages_spoken_ids'], entity_id, LanguageInformation, columns)
-
-            elif key == 'nationalities' and not value is None:
-
-                # Get the column names for NationalityInformation table
-                inspector = inspect(self.engine)
-                columns = inspector.get_columns(NationalityInformation.__tablename__)
-                columns = [column['name'] for column in columns]
-
-                # Process the arrest warrants
-                self.process_data(data['nationalities'], entity_id, NationalityInformation, columns)
-
-            elif key == 'arrest_warrants' and not value is None:
-
-                # Get the column names for ArrestWarrantInformation table
-                inspector = inspect(self.engine)
-                columns = inspector.get_columns(ArrestWarrantInformation.__tablename__)
-                columns = [column['name'] for column in columns]
-
-                # Process the arrest warrants
-                self.process_data(data['arrest_warrants'], entity_id, ArrestWarrantInformation, columns)
+            elif key == 'arrest_warrants' and value is not None:
+                self.process_data(data['arrest_warrants'], entity_id, ArrestWarrantInformation)
 
             elif key == 'pictures' and value is not None:
                 # Retrieve existing PictureInformation objects from the database for the given entity_id
@@ -115,47 +100,43 @@ class RabbitMQConsumer:
 
         self.handle_database_transaction()
 
-    def process_data(self, data, entity_id, table_name, columns):
-        # Retrieve existing information from the database
-        db_infos = self.session.query(table_name).filter_by(entity_id=entity_id).all()
+    def process_data(self, data, entity_id, table_name):
+        # Retrieve the column names of the table
+        inspector = inspect(self.engine)
+        columns = inspector.get_columns(table_name.__tablename__)
+        columns = [column['name'] for column in columns]
 
-        # Create a list of existing items
+        # Query existing data from the table
+        db_infos = self.session.query(table_name).filter_by(entity_id=entity_id).all()
         items_list = []
         ids_list = []
 
-        if db_infos is not None:
-            # Process existing items in the database
+        if db_infos:
+            # Iterate over existing items and create dictionaries for comparison
             for item in db_infos:
                 item_dict = {}
                 ids = {}
                 ids[columns[0]] = getattr(item, columns[0])
-
-                # Create a dictionary for each item's column values
                 for column in columns[1:]:
                     if hasattr(item, column):
                         column_value = getattr(item, column)
                         item_dict[column] = column_value
                         ids[column] = column_value
-
                 items_list.append(item_dict)
                 ids_list.append(ids)
 
-            # Process each item from the data
+            # Check new data and add items that are not in the existing list
             for d in data:
-                # Check if the item is already in the database
                 if d not in items_list:
                     item_dict = {}
-
-                    # Create a dictionary for the new item's column values
                     for column in columns[2:]:
                         column_value = d[column]
                         item_dict[column] = column_value
-
                     item_dict['entity_id'] = entity_id
                     item_info = table_name(**item_dict)
                     self.session.add(item_info)
 
-            # Delete items that are not present in the data
+            # Check existing items and remove items that are not in the new data
             for item in items_list:
                 if item not in data:
                     for id in ids_list:
@@ -164,7 +145,7 @@ class RabbitMQConsumer:
                             filter_conditions.append(getattr(table_name, columns[0]) == id[columns[0]])
                             self.session.query(table_name).filter(*filter_conditions).delete()
         else:
-            # If no existing data, simply add new items from the data to the database
+            # If no existing data, add all items from the new data
             for d in data:
                 item_dict = {}
                 for column in columns[1:]:
@@ -185,7 +166,6 @@ class RabbitMQConsumer:
             description=description,
             change_date=datetime.datetime.now()
         )
-
         # Add the ChangeLogInformation object to the session to be committed to the database
         self.session.add(change_log_entry)
 
@@ -279,7 +259,6 @@ class RabbitMQConsumer:
 
     def close(self):
         self.connection.close()
-
 
 consumer = RabbitMQConsumer()
 consumer.start_consuming()
