@@ -74,7 +74,7 @@ class RabbitMQConsumer:
             elif key == 'arrest_warrants':
                 self.process_data(data['arrest_warrants'], entity_id, ArrestWarrantInformation)
 
-            elif key == 'pictures' and value is not None:
+            elif key == 'pictures':
                 # Retrieve existing PictureInformation objects from the database for the given entity_id
                 db_picture_ids = [d.picture_id for d in
                                   self.session.query(PictureInformation).filter_by(entity_id=entity_id).all()]
