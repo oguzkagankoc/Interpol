@@ -78,27 +78,59 @@ class RabbitMQConsumer:
                 # Retrieve existing PictureInformation objects from the database for the given entity_id
                 db_picture_ids = [d.picture_id for d in
                                   self.session.query(PictureInformation).filter_by(entity_id=entity_id).all()]
-                if data['pictures']:
-                    queue_picture_ids = [q['picture_id'] for q in data['pictures']]
+                if data['pictures'] and db_picture_ids:
+                    queue_picture_ids = [int(q['picture_id']) for q in data['pictures']]
 
                     # Delete PictureInformation objects from the database that are not in the queue
                     delete_ids = [q for q in db_picture_ids if q not in queue_picture_ids]
-                    self.session.query(PictureInformation).filter(PictureInformation.picture_id.in_(delete_ids)).delete(
-                        synchronize_session=False)
+                    for picture_id in delete_ids:
+                        picture_info = self.session.query(PictureInformation).filter_by(picture_id=picture_id).first()
+                        if picture_info:
+                            picture_data = {
+                                'entity_id': picture_info.entity_id,
+                                'picture_id': picture_info.picture_id,
+                                'picture_url': picture_info.picture_url,
+                                'picture_base64': picture_info.picture_base64
+                            }
+                            self.session.delete(picture_info)
+                            self.add_log_entry(entity_id, PictureInformation.__tablename__, 'Deleted', picture_data)
 
                     # Add new PictureInformation objects to the database that are not in the database but in the queue
                     new_picture_ids = [p for p in queue_picture_ids if p not in db_picture_ids]
-                    new_pictures = [
-                        PictureInformation(
-                            picture_id=p,
-                            entity_id=entity_id,
-                            picture_url=f['picture_url'],
-                            picture_base64=f['picture_base64']
-                        ) for p in new_picture_ids for f in data['pictures'] if p == f['picture_id']
-                    ]
+                    new_pictures = []
+                    for p in new_picture_ids:
+                        for f in data['pictures']:
+                            if p == int(f['picture_id']):
+                                picture = PictureInformation(
+                                    picture_id=p,
+                                    entity_id=entity_id,
+                                    picture_url=f['picture_url'],
+                                    picture_base64=f['picture_base64']
+                                )
+                                picture_data = {
+                                    'entity_id': entity_id,
+                                    'picture_id': p,
+                                    'picture_url': f['picture_url'],
+                                    'picture_base64': f['picture_base64']
+                                }
+                                new_pictures.append(picture)
+                                self.add_log_entry(entity_id, PictureInformation.__tablename__, 'Added', picture_data)
+
                     self.session.add_all(new_pictures)
+
                 elif not data['pictures'] and db_picture_ids:
-                    self.session.query(PictureInformation).filter_by(entity_id=entity_id).delete()
+                    for db_id in db_picture_ids:
+                        picture_db = self.session.query(PictureInformation).filter_by(picture_id=db_id).one()
+                        picture_data = {
+                            'entity_id': picture_db.entity_id,
+                            'picture_id': picture_db.picture_id,
+                            'picture_url': picture_db.picture_url,
+                            'picture_base64': picture_db.picture_base64
+                        }
+                        self.session.query(PictureInformation).filter_by(picture_id=db_id).delete()
+                        self.add_log_entry(picture_db.entity_id, PictureInformation.__tablename__, 'Deleted',
+                                           picture_data)
+
 
         # add a new change log entry to the database
 
