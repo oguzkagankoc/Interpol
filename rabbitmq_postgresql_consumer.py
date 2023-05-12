@@ -65,37 +65,40 @@ class RabbitMQConsumer:
                     ).values({key: value})
                     self.session.execute(update_statement)
 
-            elif key == 'languages_spoken_ids' and value is not None:
+            elif key == 'languages_spoken_ids':
                 self.process_data(data['languages_spoken_ids'], entity_id, LanguageInformation)
 
-            elif key == 'nationalities' and value is not None:
+            elif key == 'nationalities':
                 self.process_data(data['nationalities'], entity_id, NationalityInformation)
 
-            elif key == 'arrest_warrants' and value is not None:
+            elif key == 'arrest_warrants':
                 self.process_data(data['arrest_warrants'], entity_id, ArrestWarrantInformation)
 
             elif key == 'pictures' and value is not None:
                 # Retrieve existing PictureInformation objects from the database for the given entity_id
                 db_picture_ids = [d.picture_id for d in
                                   self.session.query(PictureInformation).filter_by(entity_id=entity_id).all()]
-                queue_picture_ids = [q['picture_id'] for q in data['pictures']]
+                if data['pictures']:
+                    queue_picture_ids = [q['picture_id'] for q in data['pictures']]
 
-                # Delete PictureInformation objects from the database that are not in the queue
-                delete_ids = [q for q in db_picture_ids if q not in queue_picture_ids]
-                self.session.query(PictureInformation).filter(PictureInformation.picture_id.in_(delete_ids)).delete(
-                    synchronize_session=False)
+                    # Delete PictureInformation objects from the database that are not in the queue
+                    delete_ids = [q for q in db_picture_ids if q not in queue_picture_ids]
+                    self.session.query(PictureInformation).filter(PictureInformation.picture_id.in_(delete_ids)).delete(
+                        synchronize_session=False)
 
-                # Add new PictureInformation objects to the database that are not in the database but in the queue
-                new_picture_ids = [p for p in queue_picture_ids if p not in db_picture_ids]
-                new_pictures = [
-                    PictureInformation(
-                        picture_id=p,
-                        entity_id=entity_id,
-                        picture_url=f['picture_url'],
-                        picture_base64=f['picture_base64']
-                    ) for p in new_picture_ids for f in data['pictures'] if p == f['picture_id']
-                ]
-                self.session.add_all(new_pictures)
+                    # Add new PictureInformation objects to the database that are not in the database but in the queue
+                    new_picture_ids = [p for p in queue_picture_ids if p not in db_picture_ids]
+                    new_pictures = [
+                        PictureInformation(
+                            picture_id=p,
+                            entity_id=entity_id,
+                            picture_url=f['picture_url'],
+                            picture_base64=f['picture_base64']
+                        ) for p in new_picture_ids for f in data['pictures'] if p == f['picture_id']
+                    ]
+                    self.session.add_all(new_pictures)
+                elif not data['pictures'] and db_picture_ids:
+                    self.session.query(PictureInformation).filter_by(entity_id=entity_id).delete()
 
         # add a new change log entry to the database
 
@@ -111,50 +114,52 @@ class RabbitMQConsumer:
         db_infos = self.session.query(table_name).filter_by(entity_id=entity_id).all()
         items_list = []
         ids_list = []
-
-        if db_infos:
-            # Iterate over existing items and create dictionaries for comparison
-            for item in db_infos:
-                item_dict = {}
-                ids = {}
-                ids[columns[0]] = getattr(item, columns[0])
-                for column in columns[1:]:
-                    if hasattr(item, column):
-                        column_value = getattr(item, column)
-                        item_dict[column] = column_value
-                        ids[column] = column_value
-                items_list.append(item_dict)
-                ids_list.append(ids)
-
-            # Check new data and add items that are not in the existing list
-            for d in data:
-                if d not in items_list:
+        if data:
+            if db_infos:
+                # Iterate over existing items and create dictionaries for comparison
+                for item in db_infos:
                     item_dict = {}
-                    for column in columns[2:]:
+                    ids = {}
+                    ids[columns[0]] = getattr(item, columns[0])
+                    for column in columns[1:]:
+                        if hasattr(item, column):
+                            column_value = getattr(item, column)
+                            item_dict[column] = column_value
+                            ids[column] = column_value
+                    items_list.append(item_dict)
+                    ids_list.append(ids)
+
+                # Check new data and add items that are not in the existing list
+                for d in data:
+                    if d not in items_list:
+                        item_dict = {}
+                        for column in columns[2:]:
+                            column_value = d[column]
+                            item_dict[column] = column_value
+                        item_dict['entity_id'] = entity_id
+                        item_info = table_name(**item_dict)
+                        self.session.add(item_info)
+
+                # Check existing items and remove items that are not in the new data
+                for item in items_list:
+                    if item not in data:
+                        for id in ids_list:
+                            if all(id[column] == item[column] for column in columns[1:]):
+                                filter_conditions = []
+                                filter_conditions.append(getattr(table_name, columns[0]) == id[columns[0]])
+                                self.session.query(table_name).filter(*filter_conditions).delete()
+            else:
+                # If no existing data, add all items from the new data
+                for d in data:
+                    item_dict = {}
+                    for column in columns[1:]:
                         column_value = d[column]
                         item_dict[column] = column_value
                     item_dict['entity_id'] = entity_id
                     item_info = table_name(**item_dict)
                     self.session.add(item_info)
-
-            # Check existing items and remove items that are not in the new data
-            for item in items_list:
-                if item not in data:
-                    for id in ids_list:
-                        if all(id[column] == item[column] for column in columns[1:]):
-                            filter_conditions = []
-                            filter_conditions.append(getattr(table_name, columns[0]) == id[columns[0]])
-                            self.session.query(table_name).filter(*filter_conditions).delete()
-        else:
-            # If no existing data, add all items from the new data
-            for d in data:
-                item_dict = {}
-                for column in columns[1:]:
-                    column_value = d[column]
-                    item_dict[column] = column_value
-                item_dict['entity_id'] = entity_id
-                item_info = table_name(**item_dict)
-                self.session.add(item_info)
+        elif db_infos and not data:
+            self.session.query(table_name).filter_by(entity_id=entity_id).delete()
 
     def add_change_log_entry(self, key, entity_id, old_value, new_value, table_name, description):
         # Create a ChangeLogInformation object with the provided data
