@@ -198,8 +198,17 @@ class RabbitMQConsumer:
 
         elif db_infos and not data:
 
+            for item in db_infos:
+                item_dict = {}
+                for column in columns[1:]:
+                    if hasattr(item, column):
+                        column_value = getattr(item, column)
+                        item_dict[column] = column_value
+                db_id_val = getattr(item, columns[0])
+                self.session.query(table_name).filter(getattr(table_name, columns[0]) == db_id_val).delete()
+                self.add_log_entry(item_dict['entity_id'], table_name.__tablename__, 'Deleted', item_dict)
 
-            self.session.query(table_name).filter_by(entity_id=entity_id).delete()
+            #self.session.query(table_name).filter_by(entity_id=entity_id).delete()
 
     def add_change_log_entry(self, key, entity_id, old_value, new_value, table_name, description):
         # Create a ChangeLogInformation object with the provided data
