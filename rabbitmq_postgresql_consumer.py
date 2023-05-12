@@ -171,6 +171,7 @@ class RabbitMQConsumer:
                         item_dict['entity_id'] = entity_id
                         item_info = table_name(**item_dict)
                         self.session.add(item_info)
+                        self.add_log_entry(item_dict['entity_id'], table_name.__tablename__, 'Added', item_dict)
 
                 # Check existing items and remove items that are not in the new data
                 for item in items_list:
@@ -179,7 +180,10 @@ class RabbitMQConsumer:
                             if all(id[column] == item[column] for column in columns[1:]):
                                 filter_conditions = []
                                 filter_conditions.append(getattr(table_name, columns[0]) == id[columns[0]])
+                                dict_data = {column: id[column] for column in columns[1:]}
                                 self.session.query(table_name).filter(*filter_conditions).delete()
+                                self.add_log_entry(id[columns[1]], table_name.__tablename__, 'Deleted', dict_data)
+
             else:
                 # If no existing data, add all items from the new data
                 for d in data:
@@ -190,7 +194,11 @@ class RabbitMQConsumer:
                     item_dict['entity_id'] = entity_id
                     item_info = table_name(**item_dict)
                     self.session.add(item_info)
+                    self.add_log_entry(item_dict['entity_id'], table_name.__tablename__, 'Added', item_dict)
+
         elif db_infos and not data:
+
+
             self.session.query(table_name).filter_by(entity_id=entity_id).delete()
 
     def add_change_log_entry(self, key, entity_id, old_value, new_value, table_name, description):
