@@ -11,7 +11,7 @@ from database_creation import (
     PictureInformation,
     ChangeLogInformation,
     NationalityInformation,
-    LanguageInformation
+    LanguageInformation, LogInformation
 )
 
 
@@ -175,6 +175,18 @@ class RabbitMQConsumer:
         # Add the ChangeLogInformation object to the session to be committed to the database
         self.session.add(change_log_entry)
 
+    def add_log_entry(self, entity_id, table_name, action, column_data, description=None):
+        change_log_entry = LogInformation(
+            entity_id=entity_id,
+            table_name=table_name,
+            action=action,
+            timestamp=datetime.datetime.now(),
+            column_data=column_data,
+            description=description
+        )
+        self.session.add(change_log_entry)
+
+
     def callback(self, ch, method, properties, body):
         # Print the message received from the queue
         print(" [x] Received %r" % body.decode('utf-8'))
@@ -204,6 +216,7 @@ class RabbitMQConsumer:
 
         # Add the PersonalInformation object to the session to be committed to the database
         self.session.add(personal_info)
+        self.add_log_entry(data['entity_id'], PersonalInformation.__tablename__, 'Added', personal_info_data)
 
         # If there are arrest warrants in the message, create ArrestWarrantInformation objects and add them to the session
         if not data['arrest_warrants'] is None:
@@ -216,6 +229,7 @@ class RabbitMQConsumer:
                 }
                 warrant_info = ArrestWarrantInformation(**warrant_data)
                 self.session.add(warrant_info)
+                #self.add_log_entry(data['entity_id'], ArrestWarrantInformation.__tablename__, 'Added', warrant_data)
 
         # Insert picture information into the database, if any
         if not data['pictures'] is None:
@@ -228,6 +242,7 @@ class RabbitMQConsumer:
                 }
                 picture_info = PictureInformation(**picture_data)
                 self.session.add(picture_info)
+                self.add_log_entry(data['entity_id'], PictureInformation.__tablename__, 'Added', picture_data)
 
         # Add language information to the database, if any
         if not data['languages_spoken_ids'] is None:
@@ -238,6 +253,7 @@ class RabbitMQConsumer:
                 }
                 language_info = LanguageInformation(**language_data)
                 self.session.add(language_info)
+                self.add_log_entry(data['entity_id'], LanguageInformation.__tablename__, 'Added', language_data)
 
         # Add nationality information to the database, if any
         if not data['nationalities'] is None:
@@ -248,6 +264,7 @@ class RabbitMQConsumer:
                 }
                 nationality_info = NationalityInformation(**nationality_data)
                 self.session.add(nationality_info)
+                self.add_log_entry(data['entity_id'], NationalityInformation.__tablename__, 'Added', nationality_data)
 
         self.handle_database_transaction()
 

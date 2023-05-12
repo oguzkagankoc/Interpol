@@ -2,6 +2,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy import Column, String, ForeignKey, Integer, Date, Boolean, Text, DateTime, DECIMAL
 from sqlalchemy import inspect, create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.dialects.postgresql import JSONB
 import psycopg2
 
 engine = create_engine(
@@ -108,3 +109,19 @@ class ChangeLogInformation(Base):
 
 if not insp.has_table("change_log"):
     Base.metadata.tables['change_log'].create(engine)
+
+class LogInformation(Base):
+    __tablename__ = "log"
+    log_id = Column('log_id', Integer, primary_key=True)
+    entity_id = Column('entity_id', String(20), ForeignKey(
+        "personal_informations.entity_id"))
+    table_name = Column(String(50), nullable=False)
+    action = Column(String(10), nullable=False)
+    timestamp = Column(DateTime, nullable=False)
+    column_data = Column(JSONB)
+    description = Column(Text)
+    personal_informations = relationship(
+        "PersonalInformation", backref="log", lazy=True, foreign_keys=[entity_id])
+
+if not insp.has_table("log"):
+    Base.metadata.tables['log'].create(engine)
