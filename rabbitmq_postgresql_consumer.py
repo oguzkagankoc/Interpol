@@ -197,7 +197,7 @@ class RabbitMQConsumer:
                     self.add_log_entry(item_dict['entity_id'], table_name.__tablename__, 'Added', item_dict)
 
         elif db_infos and not data:
-
+            # If no data, remove existing data
             for item in db_infos:
                 item_dict = {}
                 for column in columns[1:]:
@@ -331,5 +331,7 @@ class RabbitMQConsumer:
     def close(self):
         self.connection.close()
 
-consumer = RabbitMQConsumer()
-consumer.start_consuming()
+if __name__ == "__main__":
+
+    consumer = RabbitMQConsumer()
+    consumer.start_consuming()
