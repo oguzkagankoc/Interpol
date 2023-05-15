@@ -1,6 +1,24 @@
 <!doctype html>
 <html>
   <head>
+    <script>
+    // Function to check for new data
+    function checkNewData() {
+        fetch('/check_new_data')  // Send a request to the server to check for new data
+            .then(response => response.json())  // Parse the response as JSON
+            .then(data => {
+                if (data.has_new_data) {
+                    alert('New data added!');  // Display an alert if new data is detected
+                }
+            })
+            .catch(error => {
+                console.log(error);  // Log any errors that occur during the request
+            });
+    }
+
+    // Call the checkNewData function every 5 seconds
+    setInterval(checkNewData, 5000);
+</script>
     <title>Results</title>
     <!-- Styling for table elements -->
     <style>
