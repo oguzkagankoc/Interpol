@@ -1,0 +1,157 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Person Details</title>
+    <!-- Styling for table elements -->
+    <style>
+      table {
+        font-family: Arial, Helvetica, sans-serif;
+        border-collapse: collapse;
+        width: 100%;
+      }
+      td, th {
+        border: 1px solid #ddd;
+        padding: 8px;
+      }
+      th {
+        text-align: left;
+        background-color: #f2f2f2;
+      }
+      tr:hover {
+        background-color: #f5f5f5;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Language Information -->
+    <h2>Language Information</h2>
+    <table>
+      <tr>
+        <th>Language ID</th>
+        <th>Entity ID</th>
+        <th>Languages Spoken ID</th>
+      </tr>
+      <!-- Loop through each language information and add a row to the table -->
+      {% for language in language_info %}
+      <tr>
+        <td>{{ language.language_id }}</td>
+        <td>{{ language.entity_id }}</td>
+        <td>{{ language.languages_spoken_id }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+
+    <!-- Nationality Information -->
+    <h2>Nationality Information</h2>
+    <table>
+      <tr>
+        <th>Nationality ID</th>
+        <th>Entity ID</th>
+        <th>Country ID</th>
+      </tr>
+      <!-- Loop through each nationality information and add a row to the table -->
+      {% for nationality in nationality_info %}
+      <tr>
+        <td>{{ nationality.nationality_id }}</td>
+        <td>{{ nationality.entity_id }}</td>
+        <td>{{ nationality.nationality }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+
+    <!-- Arrest Warrant Information -->
+    <h2>Arrest Warrant Information</h2>
+    <table>
+      <tr>
+        <th>Warrant ID</th>
+        <th>Entity ID</th>
+        <th>Issuing Country ID</th>
+        <th>Issuing Authority</th>
+        <th>Warrant Type</th>
+      </tr>
+      <!-- Loop through each arrest warrant information and add a row to the table -->
+      {% for warrant in warrant_info %}
+      <tr>
+        <td>{{ warrant.warrant_id }}</td>
+        <td>{{ warrant.entity_id }}</td>
+        <td>{{ warrant.issuing_country_id }}</td>
+        <td>{{ warrant.issuing_authority }}</td>
+        <td>{{ warrant.warrant_type }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+
+    <!-- Picture Information -->
+    <h2>Picture Information</h2>
+    <table>
+      <tr>
+        <th>Picture ID</th>
+        <th>Entity ID</th>
+        <th>Picture URL</th>
+        <th>Picture Base64</th>
+        <th></th>
+      </tr>
+      <!-- Loop through each picture information and add a row to the table -->
+      {% for picture in picture_info %}
+      <tr>
+        <td>{{ picture.picture_id }}</td>
+        <td>{{ picture.entity_id }}</td>
+        <td>{{ picture.picture_url }}</td>
+        <td>{{ picture.picture_base64 }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+
+    <!-- Change Log Information -->
+    <h2>Change Log Information</h2>
+    <table>
+      <tr>
+        <th>Change ID</th>
+        <th>Entity ID</th>
+        <th>Field Name</th>
+        <th>Old Value</th>
+        <th>New Value</th>
+        <th>Change Date</th>
+        <th>Description</th>
+      </tr>
+      <!-- Loop through each change log information and add a row to the table -->
+      {% for change in change_log_info %}
+      <tr>
+        <td>{{ change.log_id }}</td>
+        <td>{{ change.entity_id }}</td>
+        <td>{{ change.field_name }}</td>
+        <td>{{ change.old_value }}</td>
+        <td>{{ change.new_value }}</td>
+        <td>{{ change.change_date }}</td>
+        <td>{{ change.description }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+
+    <!-- Log Information -->
+    <h2>Log Information</h2>
+    <table>
+      <tr>
+        <th>Log ID</th>
+        <th>Entity ID</th>
+        <th>Table Name</th>
+        <th>Action</th>
+        <th>Change Date</th>
+        <th>Log Text</th>
+        <th>Description</th>
+      </tr>
+      <!-- Loop through each log information and add a row to the table -->
+      {% for log in log_info %}
+      <tr>
+        <td>{{ log.log_id }}</td>
+        <td>{{ log.entity_id }}</td>
+        <td>{{ log.table_name }}</td>
+        <td>{{ log.action }}</td>
+        <td>{{ log.timestamp }}</td>
+        <td>{{ log.column_data }}</td>
+        <td>{{ log.description }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  </body>
+</html>

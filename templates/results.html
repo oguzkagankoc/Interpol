@@ -69,7 +69,7 @@
       <!-- Loop through each person's data and add a row to the table -->
       {% for person in pagination.items %}
       <tr>
-        <td>{{ person.entity_id }}</td>
+        <td><a href="{{ url_for('person_details', entity_id=person.entity_id) }}">{{ person.entity_id }}</a></td>
         <td>{{ person.forename }}</td>
         <td>{{ person.name }}</td>
         <td>{{ person.sex_id }}</td>
