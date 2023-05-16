@@ -140,21 +140,25 @@ def person_details(entity_id):
                     log_info=log_info)
 
 def has_new_data():
-    # Check for new data here
-    # For example, you can query if there are any new records in the LogInformation table
+    # Check if there are new records in the LogInformation table
     new_data = LogInformation.query.filter_by(action='Added').count()
-    if new_data > has_new_data.counter:
-        has_new_data.counter = new_data
+    # Check if there are new records in the ChangeLogInformation table
+    new_data_change = ChangeLogInformation.query.count()
+    # If there are more new records than the previous count, update the counter and return True
+    if new_data > has_new_data.counter or new_data_change > has_new_data.counter:
+        has_new_data.counter = max(new_data, new_data_change)
         return True
+    # Otherwise, return False
     return False
 
 has_new_data.counter = 0
 
-# Define a route for checking new data
 @app.route('/check_new_data')
 def check_new_data():
+    # Check for new data
     new_data = has_new_data()
+    # Return the result as JSON
     return jsonify({'has_new_data': new_data})
-# Run the application if this script is executed as the main program
+
 if __name__ == '__main__':
     app.run(debug=True)
