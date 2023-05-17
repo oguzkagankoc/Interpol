@@ -8,10 +8,9 @@ Interpol Task is built using the following technologies:
 
 - PostgreSQL: The application uses PostgreSQL as the database management system.
 
-- RabbitMQ: The application utilizes RabbitMQ as a message broker for asynchronous communication between components.
+- HTML, CSS, JavaScript: The frontend of the application is built using HTML, CSS, and JavaScript, and utilizes the Bootstrap framework for styling and responsiveness.
 
 - Docker: The application is containerized using Docker for easy deployment and scalability.
-
 ## Getting Started
 
 1. Clone the repository:
@@ -25,6 +24,7 @@ Interpol Task is built using the following technologies:
    cd interpol_task
 
 3. Build and start the Docker containers using Docker Compose:
+   - Notes: The Docker containers are still in the development phase and may require further configuration or adjustments.
 
     ```bash
     docker-compose up --build
@@ -41,6 +41,3 @@ The containers will be orchestrated as follows:
 
     Once the containers are up and running, you can access the application by opening your web browser and navigating to http://localhost:5000.
 
-# Notes
-Make sure that the required ports (e.g., 5000 for the application) are not already in use on your machine.
-If you make changes to the code, you can rebuild the Docker images using the docker-compose build command before starting the containers again.
