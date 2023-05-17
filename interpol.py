@@ -1,18 +1,29 @@
 import base64
 import json
-
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import pika
 import requests
+import os
+from dotenv import load_dotenv
+
+dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
+load_dotenv(dotenv_path)
 
 from database_creation import PersonalInformation
 
-engine = create_engine(
-    "postgresql+psycopg2://postgres:122333@localhost:5432/task")
+# Create an engine to connect to the PostgreSQL database
+db_username = os.getenv('DB_USER')
+db_password = os.getenv('DB_PASSWORD')
+db_host = os.getenv('DB_HOST')
+db_port = os.getenv('DB_PORT')
+db_name = os.getenv('DB_NAME')
+db_url = f"postgresql+psycopg2://{db_username}:{db_password}@{db_host}:{db_port}/{db_name}"
+engine = create_engine(db_url)
+
+# Create a session to work with the database
 Session = sessionmaker(bind=engine)
 session = Session()
-
 
 class InterpolPerson:
     def __init__(self, person_url):

@@ -4,13 +4,30 @@ from sqlalchemy import inspect, create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy.dialects.postgresql import JSONB
 import psycopg2
+import os
+from dotenv import load_dotenv
 
-engine = create_engine(
-    "postgresql+psycopg2://postgres:122333@localhost:5432/task")
+# .env dosyasını yükle
+load_dotenv()
+
+# Değişkenlere erişim
+db_username = os.getenv('DB_USER')
+db_password = os.getenv('DB_PASSWORD')
+db_host = os.getenv('DB_HOST')
+db_port = os.getenv('DB_PORT')
+db_name = os.getenv('DB_NAME')
+
+# Veritabanı bağlantısı için URL oluştur
+db_url = f"postgresql+psycopg2://{db_username}:{db_password}@{db_host}:{db_port}/{db_name}"
+
+# Engine oluştur
+engine = create_engine(db_url)
 insp = inspect(engine)
 Base = declarative_base()
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
+
+
 
 
 class PersonalInformation(Base):

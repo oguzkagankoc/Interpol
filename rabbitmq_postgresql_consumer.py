@@ -13,17 +13,28 @@ from database_creation import (
     NationalityInformation,
     LanguageInformation, LogInformation
 )
+from dotenv import load_dotenv
+import os
 
+# Load environment variables from .env file
+load_dotenv()
 
 # Define a class to consume messages from a RabbitMQ queue
 class RabbitMQConsumer:
     def __init__(self):
         # Create an engine to connect to the PostgreSQL database
-        self.engine = create_engine(
-            "postgresql+psycopg2://postgres:122333@localhost:5432/task")
+        db_username = os.getenv('DB_USER')
+        db_password = os.getenv('DB_PASSWORD')
+        db_host = os.getenv('DB_HOST')
+        db_port = os.getenv('DB_PORT')
+        db_name = os.getenv('DB_NAME')
+        db_url = f"postgresql+psycopg2://{db_username}:{db_password}@{db_host}:{db_port}/{db_name}"
+        self.engine = create_engine(db_url)
+
         # Create a session to work with the database
         self.Session = sessionmaker(bind=self.engine)
         self.session = self.Session()
+
         # Create a connection to the local RabbitMQ server
         self.connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
         self.channel = self.connection.channel()
