@@ -7,30 +7,28 @@ import psycopg2
 import os
 from dotenv import load_dotenv
 
-# .env dosyasını yükle
+# Load the .env file
 load_dotenv()
 
-# Değişkenlere erişim
+# Access variables
 db_username = os.getenv('DB_USER')
 db_password = os.getenv('DB_PASSWORD')
 db_host = os.getenv('DB_HOST')
 db_port = os.getenv('DB_PORT')
 db_name = os.getenv('DB_NAME')
 
-# Veritabanı bağlantısı için URL oluştur
+# Create the database connection URL
 db_url = f"postgresql+psycopg2://{db_username}:{db_password}@{db_host}:{db_port}/{db_name}"
 
-# Engine oluştur
+# Create the engine
 engine = create_engine(db_url)
 insp = inspect(engine)
 Base = declarative_base()
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
-
-
-
 class PersonalInformation(Base):
+    # Table for storing personal information
     __tablename__ = "personal_informations"
     entity_id = Column('entity_id', String(20), primary_key=True, nullable=False)
     forename = Column('forename', String(50))
@@ -48,10 +46,12 @@ class PersonalInformation(Base):
     thumbnail = Column('thumbnail', Text)
 
 if not insp.has_table("personal_informations"):
+    # Create the 'personal_informations' table if it doesn't exist
     Base.metadata.tables['personal_informations'].create(engine)
 
 
 class LanguageInformation(Base):
+    # Table for storing language information
     __tablename__ = "language_informations"
     language_id = Column('language_id', Integer, primary_key=True)
     entity_id = Column('entity_id', String(20), ForeignKey(
@@ -62,10 +62,12 @@ class LanguageInformation(Base):
 
 
 if not insp.has_table("language_informations"):
+    # Create the 'language_informations' table if it doesn't exist
     Base.metadata.tables['language_informations'].create(engine)
 
 
 class NationalityInformation(Base):
+    # Table for storing nationality information
     __tablename__ = "nationality_informations"
     nationality_id = Column('nationality_id', Integer, primary_key=True)
     entity_id = Column('entity_id', String(20), ForeignKey(
@@ -76,10 +78,12 @@ class NationalityInformation(Base):
 
 
 if not insp.has_table("nationality_informations"):
+    # Create the 'nationality_informations' table if it doesn't exist
     Base.metadata.tables['nationality_informations'].create(engine)
 
 
 class ArrestWarrantInformation(Base):
+    # Table for storing arrest warrant information
     __tablename__ = "arrest_warrant_informations"
     arrest_warrant_id = Column('arrest_warrant_id', Integer, primary_key=True)
     entity_id = Column('entity_id', String(20), ForeignKey(
@@ -92,10 +96,12 @@ class ArrestWarrantInformation(Base):
 
 
 if not insp.has_table("arrest_warrant_informations"):
+    # Create the 'arrest_warrant_informations' table if it doesn't exist
     Base.metadata.tables['arrest_warrant_informations'].create(engine)
 
 
 class PictureInformation(Base):
+    # Table for storing picture information
     __tablename__ = "picture_informations"
     picture_id = Column('picture_id', Integer, primary_key=True)
     entity_id = Column('entity_id', String(20), ForeignKey(
@@ -107,10 +113,12 @@ class PictureInformation(Base):
 
 
 if not insp.has_table("picture_informations"):
+    # Create the 'picture_informations' table if it doesn't exist
     Base.metadata.tables['picture_informations'].create(engine)
 
 
 class ChangeLogInformation(Base):
+    # Table for storing change log information
     __tablename__ = "change_log"
     log_id = Column('log_id', Integer, primary_key=True)
     entity_id = Column('entity_id', String(20), ForeignKey(
@@ -125,9 +133,11 @@ class ChangeLogInformation(Base):
         "PersonalInformation", backref="change_log", lazy=True, foreign_keys=[entity_id])
 
 if not insp.has_table("change_log"):
+    # Create the 'change_log' table if it doesn't exist
     Base.metadata.tables['change_log'].create(engine)
 
 class LogInformation(Base):
+    # Table for storing log information
     __tablename__ = "log"
     log_id = Column('log_id', Integer, primary_key=True)
     entity_id = Column('entity_id', String(20), ForeignKey(
@@ -141,4 +151,5 @@ class LogInformation(Base):
         "PersonalInformation", backref="log", lazy=True, foreign_keys=[entity_id])
 
 if not insp.has_table("log"):
+    # Create the 'log' table if it doesn't exist
     Base.metadata.tables['log'].create(engine)

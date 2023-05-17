@@ -2,12 +2,23 @@
 from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask import jsonify
+import os
+from dotenv import load_dotenv
+# Load the .env file
+load_dotenv()
+
+# Access variables
+db_username = os.getenv('DB_USER')
+db_password = os.getenv('DB_PASSWORD')
+db_host = os.getenv('DB_HOST')
+db_port = os.getenv('DB_PORT')
+db_name = os.getenv('DB_NAME')
 
 # Create a Flask application instance
 app = Flask(__name__)
 
 # Configure the database connection URL
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql+psycopg2://postgres:122333@localhost:5432/task'
+app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql+psycopg2://{db_username}:{db_password}@{db_host}:{db_port}/{db_name}"
 
 # Initialize a SQLAlchemy object
 db = SQLAlchemy(app)
