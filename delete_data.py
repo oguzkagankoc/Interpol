@@ -8,7 +8,21 @@ from database_creation import (
     ArrestWarrantInformation,
     NationalityInformation,
     LanguageInformation,
+    LogInformation,
 )
+import os
+from dotenv import load_dotenv
+
+dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
+load_dotenv(dotenv_path)
+# Create an engine to connect to the PostgreSQL database
+db_username = os.getenv('DB_USER')
+db_password = os.getenv('DB_PASSWORD')
+db_host = os.getenv('DB_HOST')
+db_port = os.getenv('DB_PORT')
+db_name = os.getenv('DB_NAME')
+db_url = f"postgresql+psycopg2://{db_username}:{db_password}@{db_host}:{db_port}/{db_name}"
+engine = create_engine(db_url)
 
 # Create an engine for the database
 engine = create_engine("postgresql+psycopg2://postgres:122333@localhost:5432/task")
@@ -26,11 +40,15 @@ entity_classes = [
     ArrestWarrantInformation,
     PictureInformation,
     ChangeLogInformation,
+    LogInformation,
     PersonalInformation,
 ]
 
 # Loop through each class and delete all instances
 for entity_class in entity_classes:
+    # Create a new session for each iteration
+    session = Session()
+
     # Get all the entity IDs for the class
     entity_ids = session.query(entity_class.entity_id).all()
     # Extract the entity IDs from the query result
@@ -39,5 +57,8 @@ for entity_class in entity_classes:
     for entity_id in entity_ids:
         session.query(entity_class).filter_by(entity_id=entity_id).delete()
 
-# Commit the changes to the database
-session.commit()
+    # Commit the changes to the database for each iteration
+    session.commit()
+
+# Close the session
+session.close()
