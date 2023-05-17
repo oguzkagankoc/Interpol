@@ -1,0 +1,77 @@
+version: '3'
+services:
+  database_creation:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: python database_creation.py
+    depends_on:
+      - rabbitmq
+    environment:
+      - POSTGRES_HOST=database
+      - POSTGRES_PORT=${DB_PORT}
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    networks:
+      - interpol-network
+
+  rabbitmq:
+    image: rabbitmq:management
+    networks:
+      - interpol-network
+
+  rabbitmq_postgresql_consumer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: python rabbitmq_postgresql_consumer.py
+    depends_on:
+      - rabbitmq
+      - database_creation
+    environment:
+      - POSTGRES_HOST=database
+      - POSTGRES_PORT=${DB_PORT}
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    networks:
+      - interpol-network
+
+  interpol:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: python interpol.py
+    depends_on:
+      - rabbitmq
+      - rabbitmq_postgresql_consumer
+    environment:
+      - POSTGRES_HOST=database
+      - POSTGRES_PORT=${DB_PORT}
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    networks:
+      - interpol-network
+
+  application:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: python application.py
+    depends_on:
+      - interpol
+    environment:
+      - POSTGRES_HOST=database
+      - POSTGRES_PORT=${DB_PORT}
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    ports:
+      - 5000:5000
+    networks:
+      - interpol-network
+
+networks:
+  interpol-network:
