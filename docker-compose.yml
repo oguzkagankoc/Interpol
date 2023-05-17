@@ -24,7 +24,6 @@ services:
   rabbitmq_postgresql_consumer:
     build:
       context: .
-      dockerfile: Dockerfile
     command: python rabbitmq_postgresql_consumer.py
     depends_on:
       - rabbitmq
@@ -41,7 +40,6 @@ services:
   interpol:
     build:
       context: .
-      dockerfile: Dockerfile
     command: python interpol.py
     depends_on:
       - rabbitmq
@@ -58,7 +56,6 @@ services:
   application:
     build:
       context: .
-      dockerfile: Dockerfile
     command: python application.py
     depends_on:
       - interpol
