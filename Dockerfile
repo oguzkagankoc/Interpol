@@ -1,30 +1,17 @@
-# Base image
+# Set the base image to Python 3.8.16-buster
 FROM python:3.8.16-buster
 
-# Set working directory
+# Set the working directory in the container to /app
 WORKDIR /app
 
-# Copy requirements.txt to the container
+# Copy the requirements.txt file to the container
 COPY requirements.txt .
 
-# Install project dependencies
+# Install the dependencies specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the project files to the container
+# Copy the entire project to the container
 COPY . .
 
-# Set environment variables from .env file
-ARG DB_HOST
-ARG DB_PORT
-ARG DB_NAME
-ARG DB_USER
-ARG DB_PASSWORD
-
-ENV POSTGRES_HOST=$DB_HOST
-ENV POSTGRES_PORT=$DB_PORT
-ENV POSTGRES_DB=$DB_NAME
-ENV POSTGRES_USER=$DB_USER
-ENV POSTGRES_PASSWORD=$DB_PASSWORD
-
-# Run the database_creation.py script
-CMD ["python", "database_creation.py"]
+# Run the database_creation.py script when the container starts
+CMD python database_creation.py
