@@ -129,6 +129,7 @@ def create_table_if_not_exists(table_name):
     if not insp.has_table(table_name):
         # Create the table if it doesn't exist
         Base.metadata.tables[table_name].create(engine)
+        print(f"Table {table_name} has been created.")
 
 
 def create_tables():
@@ -144,7 +145,6 @@ def create_tables():
     ]
     for table_name in table_names:
         create_table_if_not_exists(table_name)
-        print(f"Table {table_name} has been created.")
 
 
 if __name__ == "__main__":
