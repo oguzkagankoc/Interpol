@@ -27,6 +27,7 @@ Base = declarative_base()
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
+
 class PersonalInformation(Base):
     # Table for storing personal information
     __tablename__ = "personal_informations"
@@ -45,10 +46,6 @@ class PersonalInformation(Base):
     is_active = Column('is_active', Boolean, nullable=False)
     thumbnail = Column('thumbnail', Text)
 
-if not insp.has_table("personal_informations"):
-    # Create the 'personal_informations' table if it doesn't exist
-    Base.metadata.tables['personal_informations'].create(engine)
-
 
 class LanguageInformation(Base):
     # Table for storing language information
@@ -61,11 +58,6 @@ class LanguageInformation(Base):
         "PersonalInformation", backref="language", lazy=True, foreign_keys=[entity_id])
 
 
-if not insp.has_table("language_informations"):
-    # Create the 'language_informations' table if it doesn't exist
-    Base.metadata.tables['language_informations'].create(engine)
-
-
 class NationalityInformation(Base):
     # Table for storing nationality information
     __tablename__ = "nationality_informations"
@@ -75,11 +67,6 @@ class NationalityInformation(Base):
     nationality = Column('nationality', String(30))
     personal_informations = relationship(
         "PersonalInformation", backref="nationality", lazy=True, foreign_keys=[entity_id])
-
-
-if not insp.has_table("nationality_informations"):
-    # Create the 'nationality_informations' table if it doesn't exist
-    Base.metadata.tables['nationality_informations'].create(engine)
 
 
 class ArrestWarrantInformation(Base):
@@ -95,11 +82,6 @@ class ArrestWarrantInformation(Base):
         "PersonalInformation", backref="arrest_warrant", lazy=True, foreign_keys=[entity_id])
 
 
-if not insp.has_table("arrest_warrant_informations"):
-    # Create the 'arrest_warrant_informations' table if it doesn't exist
-    Base.metadata.tables['arrest_warrant_informations'].create(engine)
-
-
 class PictureInformation(Base):
     # Table for storing picture information
     __tablename__ = "picture_informations"
@@ -110,11 +92,6 @@ class PictureInformation(Base):
     picture_base64 = Column('picture_base64', Text)
     personal_informations = relationship(
         "PersonalInformation", backref="picture_of_the_criminal", lazy=True, foreign_keys=[entity_id])
-
-
-if not insp.has_table("picture_informations"):
-    # Create the 'picture_informations' table if it doesn't exist
-    Base.metadata.tables['picture_informations'].create(engine)
 
 
 class ChangeLogInformation(Base):
@@ -132,9 +109,6 @@ class ChangeLogInformation(Base):
     personal_informations = relationship(
         "PersonalInformation", backref="change_log", lazy=True, foreign_keys=[entity_id])
 
-if not insp.has_table("change_log"):
-    # Create the 'change_log' table if it doesn't exist
-    Base.metadata.tables['change_log'].create(engine)
 
 class LogInformation(Base):
     # Table for storing log information
@@ -150,6 +124,29 @@ class LogInformation(Base):
     personal_informations = relationship(
         "PersonalInformation", backref="log", lazy=True, foreign_keys=[entity_id])
 
-if not insp.has_table("log"):
-    # Create the 'log' table if it doesn't exist
-    Base.metadata.tables['log'].create(engine)
+
+def create_table_if_not_exists(table_name):
+    if not insp.has_table(table_name):
+        # Create the table if it doesn't exist
+        Base.metadata.tables[table_name].create(engine)
+
+
+def create_tables():
+    # List of table names to create
+    table_names = [
+        "personal_informations",
+        "language_informations",
+        "nationality_informations",
+        "arrest_warrant_informations",
+        "picture_informations",
+        "change_log",
+        "log"
+    ]
+    for table_name in table_names:
+        create_table_if_not_exists(table_name)
+        print(f"Table {table_name} has been created.")
+
+
+if __name__ == "__main__":
+    # Call create_tables() function to create the tables if they don't exist
+    create_tables()
