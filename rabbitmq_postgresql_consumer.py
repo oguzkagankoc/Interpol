@@ -289,7 +289,7 @@ class RabbitMQConsumer:
                 }
                 warrant_info = ArrestWarrantInformation(**warrant_data)
                 self.session.add(warrant_info)
-                #self.add_log_entry(data['entity_id'], ArrestWarrantInformation.__tablename__, 'Added', warrant_data)
+                self.add_log_entry(data['entity_id'], ArrestWarrantInformation.__tablename__, 'Added', warrant_data)
 
         # Insert picture information into the database, if any
         if not data['pictures'] is None:
