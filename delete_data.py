@@ -12,10 +12,9 @@ from database_creation import (
 )
 import os
 from dotenv import load_dotenv
+load_dotenv()
 
-dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
-load_dotenv(dotenv_path)
-# Create an engine to connect to the PostgreSQL database
+# Access variables
 db_username = os.getenv('DB_USER')
 db_password = os.getenv('DB_PASSWORD')
 db_host = os.getenv('DB_HOST')
@@ -24,8 +23,6 @@ db_name = os.getenv('DB_NAME')
 db_url = f"postgresql+psycopg2://{db_username}:{db_password}@{db_host}:{db_port}/{db_name}"
 engine = create_engine(db_url)
 
-# Create an engine for the database
-engine = create_engine("postgresql+psycopg2://postgres:122333@localhost:5432/task")
 
 # Create a session maker bound to the engine
 Session = sessionmaker(bind=engine)

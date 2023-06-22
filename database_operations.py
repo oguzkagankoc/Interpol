@@ -1,11 +1,11 @@
 import datetime
 from decimal import Decimal
-import pika
-import json
-from multiprocessing import Process
 from sqlalchemy import create_engine, update, inspect
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import IntegrityError
+from dotenv import load_dotenv
+import os
+import json
 from database_creation import (
     PersonalInformation,
     ArrestWarrantInformation,
@@ -14,10 +14,6 @@ from database_creation import (
     NationalityInformation,
     LanguageInformation, LogInformation
 )
-from app import application
-from dotenv import load_dotenv
-import os
-
 # Load environment variables from .env file
 load_dotenv()
 
@@ -31,13 +27,10 @@ db_name = os.getenv('DB_NAME')
 # Create the database connection URL
 db_url = f"postgresql+psycopg2://{db_username}:{db_password}@{db_host}:{db_port}/{db_name}"
 
-# Define a route for displaying the list of persons
+# Define database operation classes
 
-
-# Define a class to consume messages from a RabbitMQ queue
-class RabbitMQConsumer:
-    def __init__(self):
-
+class DatabaseOperationsCallback:
+    def __init__(self, body):
         # Create an engine to connect to the PostgreSQL database
         self.engine = create_engine(db_url)
 
@@ -45,25 +38,12 @@ class RabbitMQConsumer:
         self.Session = sessionmaker(bind=self.engine)
         self.session = self.Session()
 
-        # Create a connection to the local RabbitMQ server
-        self.connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
-        self.channel = self.connection.channel()
+        self.body = body
 
-        # Declare queues to consume messages from
-        self.channel.queue_declare(queue='add_data')
-        self.channel.queue_declare(queue='change_data')
+    def callback_change_db(self):
 
-        # Set up consumers to consume messages from the queue and call the callback function for each message
-        self.channel.basic_consume(queue='add_data', on_message_callback=self.callback, auto_ack=True)
-        self.channel.basic_consume(queue='change_data', on_message_callback=self.callback_change, auto_ack=True)
-
-    # Define callback functions to be called for each message consumed from the queue
-    def callback_change(self, ch, method, properties, body):
-
-        # Print the message received from the queue
-        print(" [x] Received %r" % body.decode('utf-8'))
         # Parse the message data as JSON
-        data = json.loads(body.decode('utf-8'))
+        data = json.loads(self.body.decode('utf-8'))
         entity_id = data['entity_id']
 
         # Compare the data from the queue with the data from the database
@@ -255,13 +235,10 @@ class RabbitMQConsumer:
         )
         self.session.add(change_log_entry)
 
-
-    def callback(self, ch, method, properties, body):
-        # Print the message received from the queue
-        print(" [x] Received %r" % body.decode('utf-8'))
+    def callback_db(self):
 
         # Parse the message data as JSON
-        data = json.loads(body.decode('utf-8'))
+        data = json.loads(self.body.decode('utf-8'))
 
         # Create a PersonalInformation object with the received data
         personal_info_data = {
@@ -346,36 +323,4 @@ class RabbitMQConsumer:
         finally:
             # Close the session to release resources
             self.session.close()
-
-    def start_consuming(self):
-        # Start consuming messages from the queue
-        print(' [*] Waiting for messages. To exit press CTRL+C')
-        self.channel.start_consuming()
-
-    def close(self):
-        # Close the RabbitMQ connection
-        self.connection.close()
-
-
-# Define a consumer function that initializes and starts a RabbitMQ consumer
-def consumer():
-    consumer = RabbitMQConsumer()
-    consumer.start_consuming()
-
-# Define an application function that runs the application in debug mode
-
-
-# Check if the current script is being run as the main entry point
-if __name__ == "__main__":
-    # Create two Process objects, each associated with a target function
-    process1 = Process(target=consumer)
-    process2 = Process(target=application)
-
-    # Start the processes, which will execute the target functions concurrently
-    process1.start()
-    process2.start()
-
-    # Wait for the processes to finish their execution
-    process1.join()
-    process2.join()
 

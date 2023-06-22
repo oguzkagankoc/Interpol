@@ -71,5 +71,6 @@ def check_new_data():
     # Return the result as JSON
     return jsonify({'has_new_data': new_data})
 
+# Define an application function that runs the application in debug mode
 def application():
     app.run(debug=True)
