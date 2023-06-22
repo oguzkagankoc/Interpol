@@ -10,6 +10,11 @@ from models import (
     AppLogInformation,
     AppArrestWarrantInformation
 )
+import os
+from dotenv import load_dotenv
+load_dotenv()
+host = os.getenv('HOST')
+port = int(os.getenv('PORT'))
 @app.route('/results')
 def results():
     # Get the page number from the URL query parameter, or use 1 as default
@@ -73,4 +78,4 @@ def check_new_data():
 
 # Define an application function that runs the application in debug mode
 def application():
-    app.run(debug=True)
+    app.run(host=host, port=port)
