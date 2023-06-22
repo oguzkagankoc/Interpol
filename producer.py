@@ -17,6 +17,7 @@ db_password = os.getenv('DB_PASSWORD')
 db_host = os.getenv('DB_HOST')
 db_port = os.getenv('DB_PORT')
 db_name = os.getenv('DB_NAME')
+rabbitmq_host = os.getenv('RABBITMQ_HOST')
 
 # Create the database connection URL
 db_url = f"postgresql+psycopg2://{db_username}:{db_password}@{db_host}:{db_port}/{db_name}"
@@ -33,7 +34,7 @@ class Producer:
     def __init__(self, key):
         self.key = key
         # Create a new connection to the RabbitMQ server
-        self.connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_host))
         # Create a new channel on the connection
         self.channel = self.connection.channel()
         # Declare the name of the queue that will be used to send messages

@@ -2,13 +2,17 @@ import pika
 from multiprocessing import Process
 from app import application
 from database_operations import DatabaseOperationsCallback
-
+import os
+from dotenv import load_dotenv
+load_dotenv()
+# Access variables
+rabbitmq_host = os.getenv('RABBITMQ_HOST')
 # Define a class to consume messages from a RabbitMQ queue
 class RabbitMQConsumer:
     def __init__(self):
 
         # Create a connection to the local RabbitMQ server
-        self.connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_host))
         self.channel = self.connection.channel()
 
         # Declare queues to consume messages from
