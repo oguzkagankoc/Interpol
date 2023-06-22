@@ -37,8 +37,11 @@ The Interpol Data Processing System is a Python-based application that processes
 - Update the RabbitMQ connection details in the .env file with your own credentials.
 
 6. Run the application
-`     python consumer.py
-    python producer.py`
+
+`python consumer.py`
+
+`python producer.py`
+
 - This will start the consumer, producer, and web application components.
 7. Open the web application in your browser:
 - Navigate to http://localhost:5000 to access the application's user interface.
