@@ -26,6 +26,10 @@ The architecture consists of 3 containers:
 
 The project is designed to allow configuration of variables through environment variables or a configuration file. This provides flexibility in modifying the behavior of the containers without the need for code changes.
 
+## Limitations
+
+Please note that due to limitations in the Interpol API, only a limited number of persons (160) can be retrieved. Therefore, the displayed data may not represent the entire Interpol database. To accommodate this limitation, the list of wanted persons has been filtered to include only individuals with less than 160 records. The applied filter focuses on wanted persons with American nationality.
+
 ## Usage
 
 To run the project, make sure you have Docker and Docker Compose installed on your system. Then, follow these steps:
