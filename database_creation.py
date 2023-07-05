@@ -1,28 +1,28 @@
-from sqlalchemy.orm import relationship
-from sqlalchemy import Column, String, ForeignKey, Integer, Date, Boolean, Text, DateTime, DECIMAL
-from sqlalchemy import inspect, create_engine
-from sqlalchemy.orm import declarative_base, sessionmaker
-from sqlalchemy.dialects.postgresql import JSONB
-import psycopg2
 import os
+
 from dotenv import load_dotenv
+from sqlalchemy import Column, String, ForeignKey, Integer, Date, Boolean, Text, DateTime, DECIMAL
+from sqlalchemy import create_engine
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.orm import relationship
 
 # Load the .env file
 load_dotenv()
 
 # Access variables
-db_username = os.getenv('DB_USER')
-db_password = os.getenv('DB_PASSWORD')
-db_host = os.getenv('DB_HOST')
-db_port = os.getenv('DB_PORT')
-db_name = os.getenv('DB_NAME')
+db_username = os.getenv('POSTGRES_USER')
+db_password = os.getenv('POSTGRES_PASSWORD')
+db_host = os.getenv('POSTGRES_HOST')
+db_port = os.getenv('POSTGRES_PORT')
+db_name = os.getenv('POSTGRES_DB')
 
 # Create the database connection URL
 db_url = f"postgresql+psycopg2://{db_username}:{db_password}@{db_host}:{db_port}/{db_name}"
 
 # Create the engine
 engine = create_engine(db_url)
-insp = inspect(engine)
+# insp = inspect(engine)
 Base = declarative_base()
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
@@ -126,10 +126,8 @@ class LogInformation(Base):
 
 
 def create_table_if_not_exists(table_name):
-    if not insp.has_table(table_name):
-        # Create the table if it doesn't exist
-        Base.metadata.tables[table_name].create(engine)
-        print(f"Table {table_name} has been created.")
+    Base.metadata.tables[table_name].create(engine)
+    print(f"Table {table_name} has been created.")
 
 
 def create_tables():

@@ -1,0 +1,17 @@
+FROM python:3.9
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY consumer.py /app
+COPY database_operations.py /app
+COPY database_creation.py /app
+COPY app.py /app
+COPY models.py /app
+COPY templates/results.html /app/templates/
+COPY templates/details.html /app/templates/
+
+
+CMD ["python", "consumer.py"]

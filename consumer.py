@@ -1,16 +1,24 @@
+import time
+
+# Import the create_tables function from database_creation module
+from database_creation import create_tables
+
 import pika
 from multiprocessing import Process
 from app import application
 from database_operations import DatabaseOperationsCallback
 import os
 from dotenv import load_dotenv
+
+# Load environment variables from .env file
 load_dotenv()
-# Access variables
+
+# Retrieve RabbitMQ host from environment variable
 rabbitmq_host = os.getenv('RABBITMQ_HOST')
+
 # Define a class to consume messages from a RabbitMQ queue
 class RabbitMQConsumer:
     def __init__(self):
-
         # Create a connection to the local RabbitMQ server
         self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_host))
         self.channel = self.connection.channel()
@@ -25,7 +33,6 @@ class RabbitMQConsumer:
 
     # Define callback functions to be called for each message consumed from the queue
     def callback_change(self, ch, method, properties, body):
-
         # Print the message received from the queue
         print(" [x] Received %r" % body.decode('utf-8'))
 
@@ -59,6 +66,9 @@ def consumer():
 
 # Check if the current script is being run as the main entry point
 if __name__ == "__main__":
+    time.sleep(2)
+    create_tables()
+    time.sleep(1)
     # Create two Process objects, each associated with a target function
     process1 = Process(target=consumer)
     process2 = Process(target=application)
@@ -70,4 +80,3 @@ if __name__ == "__main__":
     # Wait for the processes to finish their execution
     process1.join()
     process2.join()
-

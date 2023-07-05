@@ -1,11 +1,13 @@
 import datetime
-from decimal import Decimal
-from sqlalchemy import create_engine, update, inspect
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.exc import IntegrityError
-from dotenv import load_dotenv
-import os
 import json
+import os
+from decimal import Decimal
+
+from dotenv import load_dotenv
+from sqlalchemy import create_engine, update, inspect
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import sessionmaker
+
 from database_creation import (
     PersonalInformation,
     ArrestWarrantInformation,
@@ -14,18 +16,20 @@ from database_creation import (
     NationalityInformation,
     LanguageInformation, LogInformation
 )
+
 # Load environment variables from .env file
 load_dotenv()
 
 # Access variables
-db_username = os.getenv('DB_USER')
-db_password = os.getenv('DB_PASSWORD')
-db_host = os.getenv('DB_HOST')
-db_port = os.getenv('DB_PORT')
-db_name = os.getenv('DB_NAME')
+db_username = os.getenv('POSTGRES_USER')
+db_password = os.getenv('POSTGRES_PASSWORD')
+db_host = os.getenv('POSTGRES_HOST')
+db_port = os.getenv('POSTGRES_PORT')
+db_name = os.getenv('POSTGRES_DB')
 
 # Create the database connection URL
 db_url = f"postgresql+psycopg2://{db_username}:{db_password}@{db_host}:{db_port}/{db_name}"
+
 
 # Define database operation classes
 
@@ -132,7 +136,6 @@ class DatabaseOperationsCallback:
                         self.add_log_entry(picture_db.entity_id, PictureInformation.__tablename__, 'Deleted',
                                            picture_data)
 
-
         # add a new change log entry to the database
 
         self.handle_database_transaction()
@@ -208,7 +211,6 @@ class DatabaseOperationsCallback:
                 db_id_val = getattr(item, columns[0])
                 self.session.query(table_name).filter(getattr(table_name, columns[0]) == db_id_val).delete()
                 self.add_log_entry(item_dict['entity_id'], table_name.__tablename__, 'Deleted', item_dict)
-
 
     def add_change_log_entry(self, key, entity_id, old_value, new_value, table_name, description):
         # Create a ChangeLogInformation object with the provided data
@@ -323,4 +325,3 @@ class DatabaseOperationsCallback:
         finally:
             # Close the session to release resources
             self.session.close()
-

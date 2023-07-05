@@ -1,0 +1,78 @@
+version: '3'
+services:
+
+  rabbitmq:
+    container_name: ContainerC
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_HOSTNAME=172.31.0.2
+    networks:
+      my_network:
+        ipv4_address: 172.31.0.2
+
+  postgresql:
+    container_name: postgresql
+    image: postgres:latest
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    networks:
+      my_network:
+        ipv4_address: 172.31.0.3
+
+  rabbitmq_consumer:
+    container_name: ContainerB
+    build:
+      context: .
+      dockerfile: Dockerfile.consumer
+    environment:
+      - RABBITMQ_HOST=${RABBITMQ_HOST}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - FLASK_HOST=${FLASK_HOST}
+      - FLASK_PORT=${FLASK_PORT}
+    depends_on:
+      - rabbitmq
+      - postgresql
+    networks:
+      my_network:
+        ipv4_address: 172.31.0.4
+
+  rabbitmq_producer:
+    container_name: ContainerA
+    build:
+      context: .
+      dockerfile: Dockerfile.producer
+    environment:
+      - RABBITMQ_HOST=${RABBITMQ_HOST}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - FLASK_HOST=${FLASK_HOST}
+      - FLASK_PORT=${FLASK_PORT}
+    depends_on:
+      - rabbitmq
+      - postgresql
+    network_mode: host
+
+networks:
+  my_network:
+    name: my_custom_network
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.31.0.0/16
+          gateway: 172.31.0.1

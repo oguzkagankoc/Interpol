@@ -7,8 +7,14 @@
         fetch('/check_new_data')  // Send a request to the server to check for new data
             .then(response => response.json())  // Parse the response as JSON
             .then(data => {
-                if (data.has_new_data) {
-                    alert('New data added!');  // Display an alert if new data is detected
+                if (data.has_new_data_added) {
+                    alert('New data added!');  // Display an alert if new data is added
+                }
+                if (data.has_new_data_deleted) {
+                    alert('Data deleted!');  // Display an alert if data is deleted
+                }
+                if (data.has_new_data_changed) {
+                    alert('Data changed!');  // Display an alert if data is changed
                 }
             })
             .catch(error => {
@@ -16,9 +22,9 @@
             });
     }
 
-    // Call the checkNewData function every 5 seconds
-    setInterval(checkNewData, 5000);
-</script>
+    // Call the checkNewData function every 3 seconds
+    setInterval(checkNewData, 3000);
+    </script>
     <title>Results</title>
     <!-- Styling for table elements -->
     <style>
