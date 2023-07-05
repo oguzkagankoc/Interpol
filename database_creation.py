@@ -1,7 +1,7 @@
 import os
 
 from dotenv import load_dotenv
-from sqlalchemy import Column, String, ForeignKey, Integer, Date, Boolean, Text, DateTime, DECIMAL
+from sqlalchemy import Column, String, ForeignKey, Integer, Date, Boolean, Text, DateTime, DECIMAL, MetaData
 from sqlalchemy import create_engine
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import declarative_base, sessionmaker
@@ -22,7 +22,6 @@ db_url = f"postgresql+psycopg2://{db_username}:{db_password}@{db_host}:{db_port}
 
 # Create the engine
 engine = create_engine(db_url)
-# insp = inspect(engine)
 Base = declarative_base()
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
@@ -125,10 +124,17 @@ class LogInformation(Base):
         "PersonalInformation", backref="log", lazy=True, foreign_keys=[entity_id])
 
 
-def create_table_if_not_exists(table_name):
-    Base.metadata.tables[table_name].create(engine)
-    print(f"Table {table_name} has been created.")
+def table_exists(table_name):
+    meta = MetaData()
+    meta.reflect(bind=engine)
+    return table_name in meta.tables
 
+def create_table_if_not_exists(table_name):
+    if not table_exists(table_name):
+        Base.metadata.tables[table_name].create(engine)
+        print(f"Table {table_name} has been created.")
+    else:
+        print(f"Table {table_name} already exists.")
 
 def create_tables():
     # List of table names to create
@@ -143,8 +149,6 @@ def create_tables():
     ]
     for table_name in table_names:
         create_table_if_not_exists(table_name)
-
-
 if __name__ == "__main__":
     # Call create_tables() function to create the tables if they don't exist
     create_tables()

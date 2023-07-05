@@ -91,17 +91,17 @@
         <th>Warrant ID</th>
         <th>Entity ID</th>
         <th>Issuing Country ID</th>
-        <th>Issuing Authority</th>
-        <th>Warrant Type</th>
+        <th>Charge</th>
+        <th>Charge Translation</th>
       </tr>
       <!-- Loop through each arrest warrant information and add a row to the table -->
-      {% for warrant in warrant_info %}
+      {% for warrant in arrest_warrant_info %}
       <tr>
-        <td>{{ warrant.warrant_id }}</td>
+        <td>{{ warrant.arrest_warrant_id }}</td>
         <td>{{ warrant.entity_id }}</td>
         <td>{{ warrant.issuing_country_id }}</td>
-        <td>{{ warrant.issuing_authority }}</td>
-        <td>{{ warrant.warrant_type }}</td>
+        <td>{{ warrant.charge }}</td>
+        <td>{{ warrant.charge_translation }}</td>
       </tr>
       {% endfor %}
     </table>
