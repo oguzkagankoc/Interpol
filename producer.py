@@ -54,7 +54,7 @@ class Producer:
 
 
 def main():
-    list_interpol = "https://ws-public.interpol.int/notices/v1/red?nationality=CY&resultPerPage=20&page=1"
+    list_interpol = "https://ws-public.interpol.int/notices/v1/red?nationality=US&resultPerPage=20&page=1"
     time.sleep(2)
     # Get the first page and retrieve the total number of pages
     response = requests.get(list_interpol, headers={}, data={})
@@ -63,7 +63,7 @@ def main():
 
     for page_num in range(1, total_pages):
         # Construct the page link for each page
-        page_link = f"https://ws-public.interpol.int/notices/v1/red?nationality=CY&resultPerPage=20&page={page_num}"
+        page_link = f"https://ws-public.interpol.int/notices/v1/red?nationality=US&resultPerPage=20&page={page_num}"
 
         # Get the list of persons for the current page
         response = requests.get(page_link, headers={}, data={})
