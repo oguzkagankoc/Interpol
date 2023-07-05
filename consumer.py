@@ -3,6 +3,8 @@ import time
 # Import the create_tables function from database_creation module
 from database_creation import create_tables
 
+time.sleep(2)
+create_tables()
 import pika
 from multiprocessing import Process
 from app import application
@@ -66,8 +68,7 @@ def consumer():
 
 # Check if the current script is being run as the main entry point
 if __name__ == "__main__":
-    time.sleep(2)
-    create_tables()
+
     time.sleep(1)
     # Create two Process objects, each associated with a target function
     process1 = Process(target=consumer)

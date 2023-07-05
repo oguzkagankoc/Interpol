@@ -1,7 +1,7 @@
 import json
 import os
 import time
-
+time.sleep(2)
 import pika
 import requests
 from dotenv import load_dotenv
