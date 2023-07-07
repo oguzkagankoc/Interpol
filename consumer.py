@@ -1,3 +1,4 @@
+import json
 import time
 
 # Import the create_tables function from database_creation module
@@ -36,7 +37,9 @@ class RabbitMQConsumer:
     # Define callback functions to be called for each message consumed from the queue
     def callback_change(self, ch, method, properties, body):
         # Print the message received from the queue
-        print(" [x] Received %r" % body.decode('utf-8'))
+        data = json.loads(body.decode('utf-8'))
+        entity_id = data['entity_id']
+        print(f"A record of {entity_id} entity id has been received.")
 
         # Process the message body by passing it to the DatabaseOperationsCallback class
         operator = DatabaseOperationsCallback(body)
@@ -44,7 +47,9 @@ class RabbitMQConsumer:
 
     def callback(self, ch, method, properties, body):
         # Print the message received from the queue
-        print(" [x] Received %r" % body.decode('utf-8'))
+        data = json.loads(body.decode('utf-8'))
+        entity_id = data['entity_id']
+        print(f"A record of {entity_id} entity id has been received.")
 
         # Process the message body by passing it to the DatabaseOperationsCallback class
         operator = DatabaseOperationsCallback(body)

@@ -1,5 +1,6 @@
 import base64
 import os
+import time
 
 import requests
 from dotenv import load_dotenv
@@ -24,6 +25,14 @@ app.config[
 # Initialize a SQLAlchemy object
 db = SQLAlchemy(app)
 
+def perform_request(url):
+    while True:
+        try:
+            response = requests.get(url, headers={}, data={})
+            return response
+        except requests.exceptions.RequestException:
+            print("Internet connection lost. Trying to reconnect...")
+            time.sleep(5)
 
 # Define a model for the "personal_informations" table
 class AppPersonalInformation(db.Model):
@@ -124,13 +133,13 @@ class InterpolPerson:
 
     def _get_data(self):
         # Get data from the provided URL
-        response = requests.get(self.person_url)
+        response = perform_request(self.person_url)
         data = response.json()
 
         # Get the person's image URL, retrieve the image and encode it to base64
         if "thumbnail" in data['_links'].keys():
             image_url = data['_links']['thumbnail']['href']
-            image_response = requests.get(image_url)
+            image_response = perform_request(image_url)
             image_content = image_response.content
             image_base64 = base64.b64encode(image_content).decode("utf-8")
         else:
@@ -191,13 +200,13 @@ class InterpolPerson:
         # Add pictures information to the personal information data
         pictures = []
         pictures_link = \
-            requests.request("GET", data['_links']['images']['href'], headers={}, data={}).json()["_embedded"]['images']
+            perform_request(data['_links']['images']['href']).json()["_embedded"]['images']
         if pictures_link is None:
             self.personal_info_data.update({'pictures': None})
         else:
             for p in pictures_link:
                 url = p['_links']['self']['href']
-                response = requests.get(url)
+                response = perform_request(url)
                 image_content = response.content
                 image_base64 = base64.b64encode(image_content).decode("utf-8")
                 picture_data = {

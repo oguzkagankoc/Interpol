@@ -53,11 +53,20 @@ class Producer:
         self.connection.close()
 
 
+def perform_request(url):
+    while True:
+        try:
+            response = requests.get(url, headers={}, data={})
+            return response
+        except requests.exceptions.RequestException:
+            print("Internet connection lost. Trying to reconnect...")
+            time.sleep(5)
+
 def main():
     list_interpol = "https://ws-public.interpol.int/notices/v1/red?nationality=US&resultPerPage=20&page=1"
     time.sleep(2)
     # Get the first page and retrieve the total number of pages
-    response = requests.get(list_interpol, headers={}, data={})
+    response = perform_request(list_interpol)
     json_list = response.json()
     total_pages = int(json_list['total'] / 20 + 2)
 
@@ -66,7 +75,7 @@ def main():
         page_link = f"https://ws-public.interpol.int/notices/v1/red?nationality=US&resultPerPage=20&page={page_num}"
 
         # Get the list of persons for the current page
-        response = requests.get(page_link, headers={}, data={})
+        response = perform_request(page_link)
         persons_list = response.json()['_embedded']['notices']
 
         # Process each person
