@@ -42,8 +42,8 @@ class RabbitMQConsumer:
         print(f"A record of {entity_id} entity id has been received.")
 
         # Process the message body by passing it to the DatabaseOperationsCallback class
-        operator = DatabaseOperationsCallback(body)
-        operator.callback_change_db()
+        operator = DatabaseOperationsCallback()
+        operator.callback_change_db(body)
 
     def callback(self, ch, method, properties, body):
         # Print the message received from the queue
@@ -52,8 +52,8 @@ class RabbitMQConsumer:
         print(f"A record of {entity_id} entity id has been received.")
 
         # Process the message body by passing it to the DatabaseOperationsCallback class
-        operator = DatabaseOperationsCallback(body)
-        operator.callback_db()
+        operator = DatabaseOperationsCallback()
+        operator.callback_db(body)
 
     def start_consuming(self):
         # Start consuming messages from the queue

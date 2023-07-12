@@ -34,7 +34,7 @@ db_url = f"postgresql+psycopg2://{db_username}:{db_password}@{db_host}:{db_port}
 # Define database operation classes
 
 class DatabaseOperationsCallback:
-    def __init__(self, body):
+    def __init__(self):
         # Create an engine to connect to the PostgreSQL database
         self.engine = create_engine(db_url)
 
@@ -42,12 +42,11 @@ class DatabaseOperationsCallback:
         self.Session = sessionmaker(bind=self.engine)
         self.session = self.Session()
 
-        self.body = body
 
-    def callback_change_db(self):
+    def callback_change_db(self, body):
 
         # Parse the message data as JSON
-        data = json.loads(self.body.decode('utf-8'))
+        data = json.loads(body.decode('utf-8'))
         entity_id = data['entity_id']
 
         # Compare the data from the queue with the data from the database
@@ -237,10 +236,10 @@ class DatabaseOperationsCallback:
         )
         self.session.add(change_log_entry)
 
-    def callback_db(self):
+    def callback_db(self, body):
 
         # Parse the message data as JSON
-        data = json.loads(self.body.decode('utf-8'))
+        data = json.loads(body.decode('utf-8'))
 
         # Create a PersonalInformation object with the received data
         personal_info_data = {
