@@ -90,30 +90,48 @@ def main():
     """
     The main function that performs the data retrieval and database operations.
     """
+
+    # Sleep for 2 seconds before starting the operations. This is useful to prevent immediate connection attempts in case of restarts.
     time.sleep(2)
-    # Get the first page and retrieve the total number of pages
+
+    # Define the URL for the Interpol Red Notices endpoint
     url = "https://ws-public.interpol.int/notices/v1/red"
+
+    # Define the query parameters for the GET request
     params = {
-        "nationality": "US",
-        "resultPerPage": 160,
-        "page": 1
+        "nationality": "US",  # Search for people with Cypriot nationality
+        "resultPerPage": 160,  # Request 160 results per page
+        "page": 1  # Request the first page of results
     }
 
+    # Perform the GET request and get the response
     response = perform_request(url, params)
+
+    # Convert the response to JSON format
     json_list = response.json()
 
+    # Initialize a list to hold the entity IDs of the persons
     entity_id_list = []
 
+    # Get the list of persons from the response
     persons_list = json_list['_embedded']['notices']
 
-    # Process each person
+    # Process each person in the list
     for person in persons_list:
+        # Get the person's self link
         person_links = person['_links']['self']['href']
-        interpol_person = InterpolPerson(person_links)
-        personal_info_data = interpol_person.get_personal_info_data()
-        entity_id = personal_info_data['entity_id']
-        entity_id_list.append(entity_id)
 
+        # Create an InterpolPerson object for the person
+        interpol_person = InterpolPerson(person_links)
+
+        # Get the person's personal info data
+        personal_info_data = interpol_person.get_personal_info_data()
+
+        # Get the person's entity ID
+        entity_id = personal_info_data['entity_id']
+
+        # Add the entity ID to the list
+        entity_id_list.append(entity_id)
         # Check if the person is already in the database
         if session.query(PersonalInformation).filter_by(entity_id=entity_id).first():
             print(f"The data with {entity_id} entity_id already exists in the database.")
