@@ -99,7 +99,7 @@ def main():
 
     # Define the query parameters for the GET request
     params = {
-        "nationality": "US",  # Search for people with Cypriot nationality
+        "nationality": "US",  # Search for people with United States nationality
         "resultPerPage": 160,  # Request 160 results per page
         "page": 1  # Request the first page of results
     }
