@@ -64,12 +64,13 @@ class Producer:
         self.connection.close()
 
 
-def perform_request(url):
+def perform_request(url, params=None):
     """
     Perform an HTTP GET request.
 
     Args:
         url (str): The URL to make the request.
+        params (dict, optional): Dictionary or bytes to be sent in the query string for the Request.
 
     Returns:
         requests.Response: The response object.
@@ -79,55 +80,54 @@ def perform_request(url):
     """
     while True:
         try:
-            response = requests.get(url, headers={}, data={})
+            response = requests.get(url, headers={}, params=params)
             return response
         except requests.exceptions.RequestException:
             print("Internet connection lost. Trying to reconnect...")
             time.sleep(5)
 
-
 def main():
     """
     The main function that performs the data retrieval and database operations.
     """
-    # Get the first page and retrieve the total number of pages
-    list_interpol = "https://ws-public.interpol.int/notices/v1/red?nationality=US&resultPerPage=20&page=1"
     time.sleep(2)
-    response = perform_request(list_interpol)
+    # Get the first page and retrieve the total number of pages
+    url = "https://ws-public.interpol.int/notices/v1/red"
+    params = {
+        "nationality": "US",
+        "resultPerPage": 160,
+        "page": 1
+    }
+
+    response = perform_request(url, params)
     json_list = response.json()
-    total_pages = int(json_list['total'] / 20 + 2)
+
     entity_id_list = []
 
-    for page_num in range(1, total_pages):
-        # Construct the page link for each page
-        page_link = f"https://ws-public.interpol.int/notices/v1/red?nationality=US&resultPerPage=20&page={page_num}"
+    persons_list = json_list['_embedded']['notices']
 
-        # Get the list of persons for the current page
-        response = perform_request(page_link)
-        persons_list = response.json()['_embedded']['notices']
+    # Process each person
+    for person in persons_list:
+        person_links = person['_links']['self']['href']
+        interpol_person = InterpolPerson(person_links)
+        personal_info_data = interpol_person.get_personal_info_data()
+        entity_id = personal_info_data['entity_id']
+        entity_id_list.append(entity_id)
 
-        # Process each person
-        for person in persons_list:
-            person_links = person['_links']['self']['href']
-            interpol_person = InterpolPerson(person_links)
-            personal_info_data = interpol_person.get_personal_info_data()
-            entity_id = personal_info_data['entity_id']
-            entity_id_list.append(entity_id)
-
-            # Check if the person is already in the database
-            if session.query(PersonalInformation).filter_by(entity_id=entity_id).first():
-                print(f"The data with {entity_id} entity_id already exists in the database.")
-                json_data = json.dumps(personal_info_data)
-                producer = Producer('change_data')
-                producer.publish(json_data)
-                producer.close()
-            else:
-                # Add the person to the database and publish their personal information
-                json_data = json.dumps(personal_info_data)
-                producer = Producer('add_data')
-                producer.publish(json_data)
-                producer.close()
-                print(f"The data with {entity_id} entity_id has been added to the database.")
+        # Check if the person is already in the database
+        if session.query(PersonalInformation).filter_by(entity_id=entity_id).first():
+            print(f"The data with {entity_id} entity_id already exists in the database.")
+            json_data = json.dumps(personal_info_data)
+            producer = Producer('change_data')
+            producer.publish(json_data)
+            producer.close()
+        else:
+            # Add the person to the database and publish their personal information
+            json_data = json.dumps(personal_info_data)
+            producer = Producer('add_data')
+            producer.publish(json_data)
+            producer.close()
+            print(f"The data with {entity_id} entity_id has been added to the database.")
 
     # Get the existing entity IDs from the database
     existing_entity_ids = session.query(PersonalInformation.entity_id).all()
