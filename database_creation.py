@@ -125,11 +125,26 @@ class LogInformation(Base):
 
 
 def table_exists(table_name):
+    """
+    Checks whether the specified table exists in the database.
+
+    Args:
+        table_name (str): The name of the table to check.
+
+    Returns:
+        bool: True if the table exists, False otherwise.
+    """
     meta = MetaData()
     meta.reflect(bind=engine)
     return table_name in meta.tables
 
 def create_table_if_not_exists(table_name):
+    """
+    Creates the specified table in the database if it does not already exist.
+
+    Args:
+        table_name (str): The name of the table to create.
+    """
     if not table_exists(table_name):
         Base.metadata.tables[table_name].create(engine)
         print(f"Table {table_name} has been created.")

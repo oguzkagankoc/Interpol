@@ -23,6 +23,9 @@ load_dotenv()
 
 class Application:
     def __init__(self, app):
+        """
+        Initializes the Flask application, sets up the routes, and initializes counters.
+        """
         self.app = app
         # Retrieve Flask host and port from environment variables
         self.host = os.getenv('FLASK_HOST')
@@ -42,6 +45,9 @@ class Application:
         self.app.run(host=self.host, port=self.port)
 
     def results(self):
+        """
+        Handles the results route and paginates the returned person data.
+        """
         # Get the page number from the URL query parameter, or use 1 as default
         page = request.args.get('page', 1, type=int)
         # Query the database for the list of persons and paginate the results
@@ -55,6 +61,9 @@ class Application:
         return render_template('results.html', persons=persons, pagination=persons_query, pages=pages, next_url=next_url, prev_url=prev_url)
 
     def person_details(self, entity_id):
+        """
+        Handles the details route, retrieving person and related information based on a given entity_id.
+        """
         # Query the database for the AppPersonalInformation record based on entity_id
         person = AppPersonalInformation.query.get(entity_id)
         # Query the database for related information based on entity_id
@@ -68,6 +77,9 @@ class Application:
         return render_template('details.html', person=person, language_info=language_info, nationality_info=nationality_info, arrest_warrant_info=arrest_warrant_info, picture_info=picture_info, change_log_info=change_log_info, log_info=log_info)
 
     def check_new_data(self):
+        """
+         Checks if there is new data added, deleted or changed since the last check.
+        """
         new_data_added = AppLogInformation.query.filter_by(action='Added').count()
         new_data_deleted = AppLogInformation.query.filter_by(action='Deleted').count()
         new_data_changed = AppChangeAppLogInformation.query.count()
