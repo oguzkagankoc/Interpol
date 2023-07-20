@@ -312,8 +312,8 @@ if __name__ == "__main__":
         # Wait for 2 seconds before each data retrieval operation.
         time.sleep(2)
 
-        # Create an instance of the InterpolDataRetriever class with the nationality parameter set to "CY" (Cyprus).
-        data_retriever = InterpolDataRetriever("CY")
+        # Create an instance of the InterpolDataRetriever class with the nationality parameter set to "US" (United States of America).
+        data_retriever = InterpolDataRetriever("US")
 
         # Call the retrieve_data method of the InterpolDataRetriever instance to retrieve data from Interpol,
         # process it, and perform database operations.
