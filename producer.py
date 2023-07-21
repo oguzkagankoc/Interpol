@@ -178,9 +178,9 @@ class InterpolDataRetriever:
 
     def __init__(self, nationality):
         # Create the engine
-        engine = create_engine(db_url)
-        DBSession = sessionmaker(bind=engine)
-        self.session = DBSession()
+        self.engine = create_engine(db_url)
+        self.DBSession = sessionmaker(bind=engine)
+        self.session = self.DBSession()
         self.nationality = nationality
 
     def retrieve_data(self):
@@ -192,7 +192,7 @@ class InterpolDataRetriever:
 
         # Define the query parameters for the GET request
         params = {
-            "nationality": f"{self.nationality}",  # Search for people with United States nationality
+            "nationality": f"{self.nationality}",  # Search for people with nationality
             "resultPerPage": 160,  # Request 160 results per page
             "page": 1  # Request the first page of results
         }
