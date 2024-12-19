@@ -36,7 +36,7 @@ To run the project, make sure you have Docker and Docker Compose installed on yo
 
 1. Clone the repository:
 
-```git clone https://gitlab.com/oguz.koc/interpol_task.git```
+```git clone https://github.com/oguzkagankoc/Interpol.git```
 
 
 2. Navigate to the project directory:
